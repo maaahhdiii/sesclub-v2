@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SES'Club Code Segments</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --bg-2: #0d1728;
+      --panel: rgba(15, 23, 42, 0.88);
+      --panel-2: rgba(10, 17, 30, 0.95);
+      --text: #eef2ff;
+      --muted: #a5b4fc;
+      --accent: #f59e0b;
+      --accent-2: #38bdf8;
+      --accent-3: #34d399;
+      --line: rgba(148, 163, 184, 0.2);
+      --shadow: 0 24px 55px rgba(0, 0, 0, 0.38);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+      color: var(--text);
+      line-height: 1.6;
+      background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.16), transparent 26%),
+        radial-gradient(circle at top right, rgba(245, 158, 11, 0.14), transparent 24%),
+        radial-gradient(circle at bottom left, rgba(52, 211, 153, 0.12), transparent 24%),
+        linear-gradient(180deg, var(--bg), var(--bg-2) 72%);
+    }
+
+    .page {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 40px 18px 64px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 30px;
+      border-radius: 26px;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.8));
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -90px;
+      top: -90px;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.18), transparent 70%);
+      pointer-events: none;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      margin-bottom: 14px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      color: #d8f1ff;
+      font-size: 0.84rem;
+      letter-spacing: 0.02em;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 4vw, 3.25rem);
+      margin-bottom: 12px;
+    }
+
+    .subtitle {
+      margin: 0;
+      max-width: 70ch;
+      color: #c7d2fe;
+      font-size: 1.02rem;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+      margin-top: 20px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .card h2 {
+      color: #fbbf24;
+      margin-bottom: 8px;
+      font-size: 1.5rem;
+    }
+
+    .section-note {
+      margin: 0 0 12px;
+      color: #d1d5db;
+    }
+
+    .code-block {
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      background: #06101d;
+      margin-top: 14px;
+    }
+
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 10px 14px;
+      background: rgba(15, 23, 42, 0.96);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+      color: #cbd5e1;
+      font-size: 0.88rem;
+    }
+
+    .dots {
+      display: flex;
+      gap: 7px;
+    }
+
+    .dots span {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      display: inline-block;
+    }
+
+    .dots span:nth-child(1) { background: #f87171; }
+    .dots span:nth-child(2) { background: #fbbf24; }
+    .dots span:nth-child(3) { background: #34d399; }
+
+    pre {
+      margin: 0;
+      padding: 18px 16px;
+      overflow-x: auto;
+      color: #e2e8f0;
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    code {
+      font-family: Consolas, "Courier New", monospace;
+    }
+
+    .explain {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(52, 211, 153, 0.08);
+      border: 1px solid rgba(52, 211, 153, 0.18);
+      color: #d1fae5;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+      margin-top: 20px;
+    }
+
+    .links {
+      display: grid;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .link-row {
+      padding: 12px 14px;
+      border-left: 4px solid var(--accent-2);
+      background: rgba(15, 23, 42, 0.72);
+      border-radius: 10px;
+      color: #e5e7eb;
+    }
+
+    a {
+      color: #7dd3fc;
+      text-decoration: none;
+    }
+
+    a:hover { text-decoration: underline; }
+
+    ol {
+      margin: 12px 0 0;
+      padding-left: 1.2rem;
+    }
+
+    li { margin-bottom: 8px; }
+
+    .footer-note {
+      margin-top: 16px;
+      color: #cbd5e1;
+    }
+
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="tag">Code segments first, explanation after</div>
+      <h1>SES'Club Important Code Overview</h1>
+      <p class="subtitle">This version shows code segments from the most important files, then explains what each segment does and why it matters.</p>
+    </section>
+
+    <section class="stack">
+      <article class="card">
+        <h2>1. JWT Authentication</h2>
+        <p class="section-note">This is the main login system for API requests.</p>
+        <div class="code-block">
+          <div class="code-header"><span>sesclubs/settings/base.py + users/serializers.py</span><span class="dots"><span></span><span></span><span></span></span></div>
+          <pre><code>REST_FRAMEWORK = {
+      "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+      ),
+      "DEFAULT_PERMISSION_CLASSES": (
+        "users.permissions.IsVerified",
+      ),
+    }
+
+    SIMPLE_JWT = {
+      "ACCESS_TOKEN_LIFETIME": ACCESS_TOKEN_LIFETIME,
+      "REFRESH_TOKEN_LIFETIME": REFRESH_TOKEN_LIFETIME,
+      "ROTATE_REFRESH_TOKENS": True,
+      "BLACKLIST_AFTER_ROTATION": True,
+      "UPDATE_LAST_LOGIN": True,
+      "ALGORITHM": "HS256",
+    }
+
+    class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+      def validate(self, attrs):
+        email = attrs.get("email")
+        password = attrs.get("password")
+        user = authenticate(username=email, password=password)
+        if user is None:
+          user = authenticate_club_portal(email, password)
+        if user is None:
+          raise serializers.ValidationError("Invalid credentials")
+        data = super().validate(attrs)
+        data["role"] = user.role
+        data["selected_club_id"] = resolve_selected_club(user)
+        return data</code></pre>
+        </div>
+        <div class="explain">
+          This flow has two important layers. First, settings force JWT auth and verified-user permissions across the API. Second, the custom login serializer accepts either a normal account or a club-portal credential, then returns token data plus role and selected club context. That means one login endpoint can power both the main platform and club portal without duplicating auth logic.
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>2. Google Login Routing</h2>
+        <p class="section-note">This decides where a user goes after signing in with Google.</p>
+        <div class="code-block">
+          <div class="code-header"><span>users/views.py</span><span class="dots"><span></span><span></span><span></span></span></div>
+          <pre><code>class GoogleClubLoginView(SocialLoginView):
+      def get(self, request, *args, **kwargs):
+        request.session["google_portal_target"] = "club"
+        club_id = request.GET.get("club_id")
+        if club_id:
+          request.session["club_id"] = club_id
+        return super().get(request, *args, **kwargs)
+
+
+    class GoogleStudentLoginView(SocialLoginView):
+      def get(self, request, *args, **kwargs):
+        request.session["google_portal_target"] = "student"
+        return super().get(request, *args, **kwargs)
+
+
+    class GoogleSuccessView(APIView):
+      def get(self, request, *args, **kwargs):
+        target = request.session.get("google_portal_target")
+        club_id = request.session.get("club_id")
+        user = request.user
+        if target == "club" and club_id:
+          return redirect(f"/club/?club_id={club_id}")
+        if user.is_administrator:
+          return redirect("/admin-page/")
+        if user.is_club_manager or is_club_member(user):
+          return redirect("/club/")
+        return redirect("/student/")</code></pre>
+        </div>
+        <div class="explain">
+          The critical fix here is context preservation. The app stores both intent and club ID before leaving for Google OAuth, then reads them on return to route correctly. Without this, users can authenticate successfully but land in the wrong portal. The final redirect block also applies role-based fallback logic, so admins, club users, and students each get sent to the right destination.
+        </div>
+      </article>
+    </section>
+
+    <section class="stack">
+      <article class="card">
+        <h2>3. Club Membership Model</h2>
+        <p class="section-note">This stores who belongs to a club and what role they have inside it.</p>
+        <div class="code-block">
+          <div class="code-header"><span>clubs/models.py</span><span class="dots"><span></span><span></span><span></span></span></div>
+          <pre><code>class Club(models.Model):
+    name = models.CharField(max_length=120, unique=True)
+    president = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        related_name="president_of",
+        on_delete=models.SET_NULL,
+    )
+
+
+class ClubMembership(models.Model):
+    ROLE_CHOICES = (
+        ("member", "Member"),
+        ("vice_president", "Vice President"),
+        ("president", "President"),
+    )
+    STATUS_CHOICES = (
+        ("active", "Active"),
+        ("pending", "Pending"),
+        ("left", "Left"),
+    )
+
+    club = models.ForeignKey(Club, related_name="memberships", on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="club_memberships", on_delete=models.CASCADE)
+    internal_role = models.CharField(max_length=32, choices=ROLE_CHOICES, default="member")
+    status = models.CharField(max_length=32, choices=STATUS_CHOICES, default="active")
+
+    class Meta:
+        unique_together = ("club", "user")</code></pre>
+        </div>
+        <div class="explain">
+          This model captures both identity and state of a person inside a club. The role field controls authority inside the portal, while the status field controls lifecycle transitions like pending, active, or left. The unique constraint prevents duplicate membership records for the same user in the same club, which protects downstream logic in permissions, requests, and dashboard counts.
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>4. Membership Management</h2>
+        <p class="section-note">This is the workflow that adds or removes members and sends emails.</p>
+        <div class="code-block">
+          <div class="code-header"><span>clubs/views.py</span><span class="dots"><span></span><span></span><span></span></span></div>
+          <pre><code>class ClubMembershipViewSet(ModelViewSet):
+    queryset = ClubMembership.objects.select_related("club", "user")
+    serializer_class = ClubMembershipSerializer
+    permission_classes = [CanManageClub]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        club_id = self.request.query_params.get("club")
+        if club_id:
+            qs = qs.filter(club_id=club_id)
+        return qs
+
+    def perform_create(self, serializer):
+        membership = serializer.save()
+        self._send_member_welcome_email(membership.user, membership.club)
+        if membership.internal_role == "president":
+            self._send_club_manager_email(membership.user, membership.club)
+
+    def perform_destroy(self, instance):
+        user, club = instance.user, instance.club
+        instance.delete()
+        AuditLog.log("member_removed", user=user, club=club)</code></pre>
+        </div>
+        <div class="explain">
+          This is the operational part of membership management. Query filtering keeps list APIs scoped to one club, create hooks send onboarding messages, and special-role creation can trigger manager credential emails. Deletion runs through one controlled path so audit logging and follow-up side effects remain consistent instead of being scattered across frontend calls.
+        </div>
+      </article>
+    </section>
+
+    <section class="stack">
+      <article class="card">
+        <h2>5. Profile Data for the Frontend</h2>
+        <p class="section-note">This is how the frontend learns the current role and membership state.</p>
+        <div class="code-block">
+          <div class="code-header"><span>users/views.py</span><span class="dots"><span></span><span></span><span></span></span></div>
+          <pre><code>class ProfileView(RetrieveAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def retrieve(self, request, *args, **kwargs):
+        user = request.user
+        selected_club_id = request.query_params.get("club_id")
+        membership = ClubMembership.objects.filter(
+            user=user,
+            club_id=selected_club_id,
+            status="active",
+        ).first()
+
+        payload = {
+            "id": user.id,
+            "email": user.email,
+            "role": user.role,
+            "is_club_manager": user.is_club_manager,
+            "is_club_member": membership is not None,
+            "club_internal_role": membership.internal_role if membership else None,
+            "club_membership_status": membership.status if membership else None,
+        }
+        return Response(payload)</code></pre>
+        </div>
+        <div class="explain">
+          This endpoint is the frontend truth source after authentication. It merges global identity (user role) with club-specific identity (membership role and status) based on the selected club. Because this response is explicit, the UI can render correct nav visibility, badge labels, and access checks without guessing from incomplete token data.
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>6. Settings That Control Everything</h2>
+        <p class="section-note">This file ties authentication, email, OAuth, and API behavior together.</p>
+        <div class="code-block">
+          <div class="code-header"><span>sesclubs/settings/base.py</span><span class="dots"><span></span><span></span><span></span></span></div>
+          <pre><code>AUTH_USER_MODEL = "users.User"
+
+AUTHENTICATION_BACKENDS = (
+    "social_core.backends.google.GoogleOAuth2",
+    "django.contrib.auth.backends.ModelBackend",
+)
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = env("GOOGLE_CLIENT_ID", default="")
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = env("GOOGLE_CLIENT_SECRET", default="")
+
+SOCIAL_AUTH_PIPELINE = (
+    "social_core.pipeline.social_auth.social_details",
+    "social_core.pipeline.social_auth.social_uid",
+    "social_core.pipeline.social_auth.auth_allowed",
+    "social_core.pipeline.social_auth.social_user",
+    "social_core.pipeline.user.get_username",
+    "social_core.pipeline.user.create_user",
+    "users.pipeline.validate_sesame_domain",
+    "users.pipeline.enforce_role_rules",
+    "social_core.pipeline.social_auth.associate_user",
+    "social_core.pipeline.social_auth.load_extra_data",
+)
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@sesclub.local")</code></pre>
+        </div>
+        <div class="explain">
+          This settings block wires together the custom user model, Google OAuth backend, post-login pipeline checks, and outbound email behavior. In practice, this is the highest-impact configuration surface in the app: if pipeline order is wrong, domain checks can be bypassed; if auth backends are wrong, social login fails; if email settings are wrong, verification and manager credential flows silently break.
+        </div>
+      </article>
+    </section>
+
+    <section class="card" style="margin-top:18px;">
+      <h2>Files To Read First</h2>
+      <div class="links">
+        <div class="link-row"><a href="sesclubs/settings/base.py">sesclubs/settings/base.py</a></div>
+        <div class="link-row"><a href="users/models.py">users/models.py</a></div>
+        <div class="link-row"><a href="users/serializers.py">users/serializers.py</a></div>
+        <div class="link-row"><a href="users/views.py">users/views.py</a></div>
+        <div class="link-row"><a href="clubs/models.py">clubs/models.py</a></div>
+        <div class="link-row"><a href="clubs/views.py">clubs/views.py</a></div>
+      </div>
+      <p class="footer-note">These files explain how users log in, how roles work, how club membership works, how Google auth works, and how the club portal decides what each user can access.</p>
+    </section>
+  </main>
+</body>
+</html>

@@ -106,6 +106,19 @@
   .tab { flex: 1; padding: 8px; border-radius: 7px; font-size: 13px; font-weight: 500; color: var(--muted); border: none; background: none; cursor: pointer; transition: all 0.15s; }
   .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
+  .role-settings-card { margin-top: 18px; }
+  .role-settings-grid { display: grid; grid-template-columns: 280px 1fr; gap: 16px; }
+  .feature-palette, .roles-grid { background: var(--surface2); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+  .feature-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .feature-chip { display: inline-flex; align-items: center; padding: 9px 12px; border-radius: 10px; background: rgba(91,79,207,0.12); border: 1px solid rgba(91,79,207,0.25); color: var(--text); font-size: 13px; cursor: grab; user-select: none; }
+  .roles-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .role-col { display: flex; flex-direction: column; gap: 8px; }
+  .role-drop { min-height: 260px; border: 1px dashed var(--border); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px; background: rgba(255,255,255,0.02); }
+  .role-drop.drag-target { border-color: rgba(91,79,207,0.6); background: rgba(91,79,207,0.08); }
+  .role-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 10px; border-radius: 10px; background: rgba(91,79,207,0.14); border: 1px solid rgba(91,79,207,0.22); font-size: 13px; }
+  .role-remove { border: none; background: transparent; color: var(--muted); cursor: pointer; font-size: 16px; line-height: 1; }
+  .role-actions { display: flex; gap: 8px; margin-top: 12px; }
+
   /* Toast */
   .toast { position: fixed; bottom: 24px; right: 24px; background: var(--text); color: white; border-radius: 10px; padding: 12px 18px; font-size: 13px; z-index: 1000; transform: translateY(60px); opacity: 0; transition: all 0.3s; }
   .toast.show { transform: translateY(0); opacity: 1; }
@@ -182,6 +195,41 @@
       </div>
     </div>
 
+    <div class="card role-settings-card" id="role-settings-card" style="display:none">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:18px 18px 0">
+        <div>
+          <div style="font-weight:700;font-size:16px">Role Settings</div>
+          <div style="margin-top:4px;color:var(--muted);font-size:13px">Drag features into each role to control what members can see in the club portal.</div>
+        </div>
+      </div>
+      <div style="padding:18px">
+        <div class="role-settings-grid">
+          <div class="feature-palette">
+            <div class="panel-title">Features</div>
+            <div class="feature-list" id="feature-list"></div>
+            <div class="role-actions">
+              <button class="btn btn-primary btn-sm" type="button" onclick="saveRoleSettings()">Save</button>
+              <button class="btn btn-ghost btn-sm" type="button" onclick="resetRoleSettings()">Reset</button>
+            </div>
+          </div>
+          <div class="roles-grid">
+            <div class="role-col">
+              <div class="panel-title">President</div>
+              <div id="role-president" class="role-drop" ondragover="onRoleDragOver(event,'president')" ondragleave="onRoleDragLeave(event,'president')" ondrop="onRoleDrop(event,'president')"></div>
+            </div>
+            <div class="role-col">
+              <div class="panel-title">Vice President</div>
+              <div id="role-vice_president" class="role-drop" ondragover="onRoleDragOver(event,'vice_president')" ondragleave="onRoleDragLeave(event,'vice_president')" ondrop="onRoleDrop(event,'vice_president')"></div>
+            </div>
+            <div class="role-col">
+              <div class="panel-title">Member</div>
+              <div id="role-member" class="role-drop" ondragover="onRoleDragOver(event,'member')" ondragleave="onRoleDragLeave(event,'member')" ondrop="onRoleDrop(event,'member')"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="members-header">
       <div>
         <div class="members-title">Members</div>
@@ -218,10 +266,46 @@ let allStudents = [];
 let members = [];
 let myClub = null;
 let roleFilter = 'all';
+let draggedFeature = null;
+
+const ROLE_SETTINGS_KEY = 'club_role_settings_v1';
+const FEATURES = {
+  dashboard: 'Tableau de bord',
+  club: 'Mon Club',
+  membres: 'Membres',
+  events: 'Evenements',
+  demandes: 'Demandes',
+  avis: 'Avis',
+};
 
 const colors = ['avatar-accent'];
 const roleBadges = { president:'role-president', vice_president:'role-vice_president', secretary:'role-secretary', officer:'role-officer', member:'role-member' };
 const roleLabels = { president:'President', vice_president:'Vice President', secretary:'Secretary', officer:'Officer', member:'Member' };
+
+function defaultRoleSettings() {
+  return {
+    president: ['dashboard', 'club', 'membres', 'events', 'demandes', 'avis'],
+    vice_president: ['dashboard', 'events', 'membres', 'demandes', 'avis'],
+    member: ['dashboard'],
+  };
+}
+
+function loadRoleSettings() {
+  try {
+    const raw = localStorage.getItem(ROLE_SETTINGS_KEY);
+    if (!raw) return defaultRoleSettings();
+    const parsed = JSON.parse(raw);
+    return {
+      president: Array.isArray(parsed.president) ? parsed.president : ['dashboard'],
+      vice_president: Array.isArray(parsed.vice_president) ? parsed.vice_president : ['dashboard'],
+      member: Array.isArray(parsed.member) ? parsed.member : ['dashboard'],
+    };
+  } catch (_) {
+    return defaultRoleSettings();
+  }
+}
+
+let roleSettings = loadRoleSettings();
 
 function initials(name) {
   return (name||'?').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
@@ -243,6 +327,76 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+function syncRoleSettingsVisibility() {
+  const card = document.getElementById('role-settings-card');
+  const isPresident = (myClub?.memberships || []).some((m) => m.user === currentUser?.id && m.internal_role === 'president');
+  if (card) card.style.display = isPresident ? 'block' : 'none';
+}
+
+function renderRoleSettings() {
+  const featureList = document.getElementById('feature-list');
+  if (!featureList) return;
+
+  featureList.innerHTML = Object.entries(FEATURES).map(([key, label]) => (
+    `<div class="feature-chip" draggable="true" ondragstart="onFeatureDragStart(event,'${key}')">${label}</div>`
+  )).join('');
+
+  ['president', 'vice_president', 'member'].forEach((role) => {
+    const root = document.getElementById(`role-${role}`);
+    if (!root) return;
+    const items = (roleSettings[role] || []).map((feature) => {
+      const label = FEATURES[feature] || feature;
+      return `<div class="role-item"><span>${label}</span><button class="role-remove" type="button" onclick="removeRoleFeature('${role}','${feature}')">x</button></div>`;
+    }).join('');
+    root.innerHTML = items || `<div style="color:var(--muted);font-size:12px">Drop features here</div>`;
+  });
+}
+
+function onFeatureDragStart(e, feature) {
+  draggedFeature = feature;
+  e.dataTransfer.effectAllowed = 'copy';
+}
+
+function onRoleDragOver(e, role) {
+  e.preventDefault();
+  const root = document.getElementById(`role-${role}`);
+  if (root) root.classList.add('drag-target');
+}
+
+function onRoleDragLeave(e, role) {
+  const root = document.getElementById(`role-${role}`);
+  if (root) root.classList.remove('drag-target');
+}
+
+function onRoleDrop(e, role) {
+  e.preventDefault();
+  const root = document.getElementById(`role-${role}`);
+  if (root) root.classList.remove('drag-target');
+  if (!draggedFeature) return;
+  const current = new Set(roleSettings[role] || []);
+  current.add(draggedFeature);
+  roleSettings[role] = Array.from(current);
+  renderRoleSettings();
+}
+
+function removeRoleFeature(role, feature) {
+  roleSettings[role] = (roleSettings[role] || []).filter((entry) => entry !== feature);
+  if (!roleSettings[role].includes('dashboard')) roleSettings[role].unshift('dashboard');
+  renderRoleSettings();
+}
+
+function saveRoleSettings() {
+  localStorage.setItem(ROLE_SETTINGS_KEY, JSON.stringify(roleSettings));
+  showToast('Role settings saved');
+}
+
+function resetRoleSettings() {
+  roleSettings = defaultRoleSettings();
+  localStorage.setItem(ROLE_SETTINGS_KEY, JSON.stringify(roleSettings));
+  renderRoleSettings();
+  showToast('Role settings reset');
 }
 
 async function apiFetch(path, opts={}) {
@@ -271,7 +425,7 @@ async function loadMyClub() {
         {id:'m4',user:'s3',internal_role:'officer',status:'approved',joined_at:'2025-09-12',user_detail:{id:'s3',first_name:'Lina',last_name:'Hamdi',email:'lina.hamdi@sesame.com.tn'}},
       ]
     };
-    currentUser = { id:'p1', first_name:'Yassine', last_name:'Dridi', email:'yassine.dridi@sesame.com.tn' };
+    currentUser = { id:'p1', first_name:'Yassine', last_name:'Dridi', email:'yassine.dridi@sesame.com.tn', club_internal_role:'president' };
   } else {
     // Find club where current user is president
     myClub = clubs.find(c=>(c.memberships||[]).some(m=>m.user===currentUser?.id && m.internal_role==='president')) || clubs[0];
@@ -313,6 +467,8 @@ function updateClubUI() {
   document.getElementById('president-name').textContent = presName;
   document.getElementById('president-avatar').textContent = initials(presName);
 
+  syncRoleSettingsVisibility();
+  renderRoleSettings();
   renderMembers();
 }
 

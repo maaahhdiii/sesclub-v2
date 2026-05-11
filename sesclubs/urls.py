@@ -6,6 +6,7 @@ from . import static_views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('admin-page/', static_views.admin_page, name='admin-page'),
+    path('president-page/', static_views.president_page, name='president-page'),
     path('', RedirectView.as_view(url='/api/v1/health/'), name='root-redirect'),
     path('student/', static_views.student, name='student-page'),
     path('club/', static_views.club, name='club-page'),

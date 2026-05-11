@@ -22,5 +22,9 @@ def club(request):
     return _serve_frontend_file('club.html')
 
 
+def president_page(request):
+    return _serve_frontend_file('president.html')
+
+
 def admin_page(request):
     return _serve_frontend_file('admin.html')
