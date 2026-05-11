@@ -216,15 +216,43 @@ class GoogleSuccessView(GoogleCompleteView):
                 ).order_by('-joined_at').first()
                 if fallback_membership:
                     club_target_id = str(fallback_membership.club_id)
-            club_suffix = f'?club_id={quote(str(club_target_id))}' if club_target_id else ''
-            frontend_url = request.build_absolute_uri(f'/club/{club_suffix}')
-            portal_name = 'club portal'
+            if club_target_id:
+                club_suffix = f'?club_id={quote(str(club_target_id))}'
+                frontend_url = request.build_absolute_uri(f'/club/{club_suffix}')
+                portal_name = 'club portal'
+            else:
+                # Explicit club login requested but no club context resolved —
+                # avoid sending a user with no club membership/credentials straight into the club portal.
+                frontend_url = request.build_absolute_uri('/student/')
+                portal_name = 'student portal'
         elif user.is_administrator:
             frontend_url = request.build_absolute_uri('/admin-page/')
             portal_name = "administrator portal"
         elif user.is_club_manager:
-            frontend_url = request.build_absolute_uri('/club/')
-            portal_name = "club manager portal"
+            # Only route to the club portal if the user actually has an active club context.
+            # A user may retain the `club_manager` role but no longer manage any club —
+            # in that case send them to the student portal instead of granting club access.
+            club_target_id = request.session.pop('google_club_id', None)
+            if not club_target_id:
+                # Prefer explicit manager credentials, then any active membership
+                mc = user.club_portal_credentials.filter(is_active=True).first() if hasattr(user, 'club_portal_credentials') else None
+                if mc:
+                    club_target_id = str(mc.club_id)
+                else:
+                    fallback_membership = ClubMembership.objects.filter(
+                        user=user,
+                        status__in=['active', 'approved'],
+                    ).order_by('-joined_at').first()
+                    if fallback_membership:
+                        club_target_id = str(fallback_membership.club_id)
+
+            if club_target_id:
+                club_suffix = f'?club_id={quote(str(club_target_id))}'
+                frontend_url = request.build_absolute_uri(f'/club/{club_suffix}')
+                portal_name = 'club manager portal'
+            else:
+                frontend_url = request.build_absolute_uri('/student/')
+                portal_name = 'student portal'
         else:
             frontend_url = request.build_absolute_uri('/student/')
             portal_name = "student portal"
