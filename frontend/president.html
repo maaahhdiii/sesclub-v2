@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SESame — Club President Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <!-- FullCalendar CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f5f2;
+    --surface: #ffffff;
+    --surface2: #f0eff0;
+    --border: #e4e3e8;
+    --accent: #5b4fcf;
+    --accent-light: rgba(91,79,207,0.1);
+    --text: #1a1926;
+    --muted: #7b7a8c;
+    --success: #16a34a;
+    --danger: #dc2626;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 32px; display: flex; align-items: center; height: 64px; gap: 20px; }
+  .logo { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 20px; color: var(--accent); }
+  .header-sep { width: 1px; height: 24px; background: var(--border); }
+  .club-selector { display: flex; align-items: center; gap: 10px; }
+  .club-pill { display: flex; align-items: center; gap: 8px; background: var(--accent-light); border: 1px solid rgba(91,79,207,0.2); border-radius: 20px; padding: 6px 14px; font-size: 14px; font-weight: 500; color: var(--accent); cursor: pointer; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .user-chip { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+  .avatar-accent { background: var(--accent-light); color: var(--accent); }
+
+  .layout { display: grid; grid-template-columns: 320px 1fr; gap: 24px; padding: 28px 32px; max-width: 1200px; margin: 0 auto; }
+
+  /* Left: Add members */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; }
+  .card-header { padding: 20px 22px; border-bottom: 1px solid var(--border); }
+  .card-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+  .card-sub { font-size: 12px; color: var(--muted); }
+  .card-body { padding: 16px; }
+
+  .search-box { position: relative; margin-bottom: 12px; }
+  .search-box input { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 10px 12px 10px 38px; border-radius: 10px; font-size: 14px; font-family: 'DM Sans', sans-serif; outline: none; transition: border 0.15s; }
+  .search-box input:focus { border-color: var(--accent); }
+  .search-box input::placeholder { color: var(--muted); }
+  .search-box svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); width: 16px; height: 16px; }
+
+  .search-results { max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+  .result-item { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: 10px; border: 1px solid transparent; transition: all 0.15s; cursor: pointer; }
+  .result-item:hover { background: var(--surface2); border-color: var(--border); }
+  .result-info { flex: 1; min-width: 0; }
+  .result-name { font-size: 13px; font-weight: 500; }
+  .result-email { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .result-action { flex-shrink: 0; }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; font-family: 'DM Sans', sans-serif; }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #4a3eb8; }
+  .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--surface2); }
+  .btn-sm { padding: 5px 11px; font-size: 12px; border-radius: 7px; }
+  .btn-add { background: rgba(91,79,207,0.1); color: var(--accent); border: 1px solid rgba(91,79,207,0.2); }
+  .btn-add:hover { background: rgba(91,79,207,0.2); }
+  .btn-added { background: rgba(22,163,74,0.1); color: var(--success); border: 1px solid rgba(22,163,74,0.2); cursor: default; }
+
+  /* Role select */
+  .role-select { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 5px 10px; border-radius: 7px; font-size: 12px; font-family: 'DM Sans', sans-serif; outline: none; cursor: pointer; }
+  .role-select:focus { border-color: var(--accent); }
+
+  /* Right: Members list */
+  .members-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .members-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; }
+  .member-count { font-size: 13px; color: var(--muted); }
+
+  .members-grid { display: flex; flex-direction: column; gap: 8px; }
+  .member-row { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; transition: all 0.15s; }
+  .member-row:hover { border-color: rgba(91,79,207,0.3); box-shadow: 0 2px 8px rgba(91,79,207,0.08); }
+  .member-info { flex: 1; min-width: 0; }
+  .member-name { font-size: 14px; font-weight: 500; }
+  .member-email { font-size: 12px; color: var(--muted); }
+  .member-meta { display: flex; align-items: center; gap: 10px; }
+
+  .role-badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .role-president { background: rgba(91,79,207,0.12); color: var(--accent); }
+  .role-vice_president { background: rgba(14,165,233,0.1); color: #0369a1; }
+  .role-secretary { background: rgba(245,158,11,0.1); color: #b45309; }
+  .role-officer { background: rgba(22,163,74,0.1); color: var(--success); }
+  .role-member { background: var(--surface2); color: var(--muted); }
+
+  .joined-date { font-size: 11px; color: var(--muted); }
+
+  /* Club info card */
+  .club-info-card { background: linear-gradient(135deg, #5b4fcf 0%, #7c3aed 100%); border-radius: 16px; padding: 24px; color: white; margin-bottom: 20px; }
+  .club-info-name { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+  .club-info-desc { font-size: 13px; opacity: 0.8; line-height: 1.5; margin-bottom: 16px; }
+  .club-info-stats { display: flex; gap: 24px; }
+  .club-stat { text-align: center; }
+  .club-stat-num { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; }
+  .club-stat-label { font-size: 11px; opacity: 0.7; margin-top: 2px; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; background: var(--surface2); border-radius: 10px; padding: 4px; margin-bottom: 16px; }
+  .tab { flex: 1; padding: 8px; border-radius: 7px; font-size: 13px; font-weight: 500; color: var(--muted); border: none; background: none; cursor: pointer; transition: all 0.15s; }
+  .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--text); color: white; border-radius: 10px; padding: 12px 18px; font-size: 13px; z-index: 1000; transform: translateY(60px); opacity: 0; transition: all 0.3s; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 48px 20px; color: var(--muted); }
+  .empty svg { margin: 0 auto 12px; display: block; opacity: 0.3; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">SESame</div>
+  <div class="header-sep"></div>
+  <div class="club-selector">
+    <div class="club-pill" id="active-club-pill">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      <span id="active-club-name">Loading...</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="user-chip">
+      <div class="avatar avatar-accent" id="president-avatar">?</div>
+      <div>
+        <div style="font-weight:500;font-size:13px" id="president-name">President</div>
+        <div style="font-size:11px;color:var(--muted)">Club President</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- Left: Add Member -->
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Add Members</div>
+        <div class="card-sub">Search by name or email</div>
+      </div>
+      <div class="card-body">
+        <div class="search-box">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="member-search" placeholder="Search students..." oninput="searchStudents()" />
+        </div>
+        <div class="search-results" id="search-results">
+          <div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">Type to search students...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Club + Members -->
+  <div>
+    <!-- Club info banner -->
+    <div class="club-info-card" id="club-banner">
+      <div class="club-info-name" id="banner-name">Loading club...</div>
+      <div class="club-info-desc" id="banner-desc">Loading description...</div>
+      <div class="club-info-stats">
+        <div class="club-stat"><div class="club-stat-num" id="banner-members">0</div><div class="club-stat-label">Members</div></div>
+        <div class="club-stat"><div class="club-stat-num" id="banner-events">0</div><div class="club-stat-label">Events</div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border)">
+        <div style="font-weight:700">Club Calendar</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-ghost btn-sm" id="refresh-events-btn">Refresh</button>
+          <button class="btn btn-primary btn-sm" id="google-sync-btn">Sync with Google Calendar</button>
+        </div>
+      </div>
+      <div class="card-body" style="padding:8px">
+        <div id="calendar" style="max-width:100%;"></div>
+      </div>
+    </div>
+
+    <div class="members-header">
+      <div>
+        <div class="members-title">Members</div>
+      </div>
+      <div class="member-count" id="member-count-label">0 members</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="filterRole('all',this)">All</button>
+      <button class="tab" onclick="filterRole('president',this)">President</button>
+      <button class="tab" onclick="filterRole('vice_president',this)">VP</button>
+      <button class="tab" onclick="filterRole('officer',this)">Officers</button>
+      <button class="tab" onclick="filterRole('member',this)">Members</button>
+    </div>
+
+    <div class="members-grid" id="members-grid">
+      <div class="empty">
+        <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        Loading members...
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- FullCalendar JS -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
+<script>
+const API = 'http://127.0.0.1:8000/api/v1';
+let token = localStorage.getItem('club_access');
+let currentUser = JSON.parse(localStorage.getItem('club_user')||'null');
+let allStudents = [];
+let members = [];
+let myClub = null;
+let roleFilter = 'all';
+
+const colors = ['avatar-accent'];
+const roleBadges = { president:'role-president', vice_president:'role-vice_president', secretary:'role-secretary', officer:'role-officer', member:'role-member' };
+const roleLabels = { president:'President', vice_president:'Vice President', secretary:'Secretary', officer:'Officer', member:'Member' };
+
+function initials(name) {
+  return (name||'?').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
+}
+function colorAvatar(str) {
+  const palettes = [
+    'background:rgba(91,79,207,0.1);color:#5b4fcf',
+    'background:rgba(14,165,233,0.1);color:#0369a1',
+    'background:rgba(245,158,11,0.1);color:#b45309',
+    'background:rgba(22,163,74,0.1);color:#16a34a',
+    'background:rgba(244,63,94,0.1);color:#be123c',
+  ];
+  let h=0; for(let c of (str||'')) h=(h*31+c.charCodeAt(0))&0xffff;
+  return palettes[h % palettes.length];
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+async function apiFetch(path, opts={}) {
+  const headers = { 'Content-Type': 'application/json', ...(token?{Authorization:`Bearer ${token}`}:{}) };
+  try {
+    const r = await fetch(API+path, {...opts, headers});
+    if (!r.ok) throw new Error(r.status);
+    const ct = r.headers.get('content-type')||'';
+    return ct.includes('json') ? r.json() : {};
+  } catch(e) { return null; }
+}
+
+async function loadMyClub() {
+  // Get the club where I am president
+  const data = await apiFetch('/clubs/');
+  let clubs = data?.results || (Array.isArray(data)?data:[]);
+
+  // Demo fallback
+  if (!clubs.length) {
+    myClub = {
+      id:'demo-club', name:'Robotics Club', description:'Building the future, one robot at a time. We design, code, and compete.',
+      category:'Technology', memberships: [
+        {id:'m1',user:'p1',internal_role:'president',status:'approved',joined_at:'2025-09-01',user_detail:{id:'p1',first_name:'Yassine',last_name:'Dridi',email:'yassine.dridi@sesame.com.tn'}},
+        {id:'m2',user:'s1',internal_role:'vice_president',status:'approved',joined_at:'2025-09-05',user_detail:{id:'s1',first_name:'Sara',last_name:'Trabelsi',email:'sara.trabelsi@sesame.com.tn'}},
+        {id:'m3',user:'s2',internal_role:'member',status:'approved',joined_at:'2025-09-10',user_detail:{id:'s2',first_name:'Mohamed',last_name:'Jlassi',email:'mohamed.jlassi@sesame.com.tn'}},
+        {id:'m4',user:'s3',internal_role:'officer',status:'approved',joined_at:'2025-09-12',user_detail:{id:'s3',first_name:'Lina',last_name:'Hamdi',email:'lina.hamdi@sesame.com.tn'}},
+      ]
+    };
+    currentUser = { id:'p1', first_name:'Yassine', last_name:'Dridi', email:'yassine.dridi@sesame.com.tn' };
+  } else {
+    // Find club where current user is president
+    myClub = clubs.find(c=>(c.memberships||[]).some(m=>m.user===currentUser?.id && m.internal_role==='president')) || clubs[0];
+    if (myClub) members = myClub.memberships || [];
+  }
+
+  updateClubUI();
+}
+
+async function loadAllStudents() {
+  const data = await apiFetch('/users/');
+  allStudents = data?.results || (Array.isArray(data)?data:[]);
+  if (!allStudents.length) {
+    allStudents = [
+      {id:'x1',first_name:'Amine',last_name:'Ben Ali',email:'amine.benali@sesame.com.tn'},
+      {id:'x2',first_name:'Nour',last_name:'Chaabane',email:'nour.chaabane@sesame.com.tn'},
+      {id:'x3',first_name:'Aziz',last_name:'Mansour',email:'aziz.mansour@sesame.com.tn'},
+      {id:'x4',first_name:'Hana',last_name:'Boukhriss',email:'hana.boukhriss@sesame.com.tn'},
+      {id:'x5',first_name:'Ahmed',last_name:'Saidi',email:'ahmed.saidi@sesame.com.tn'},
+      {id:'x6',first_name:'Rim',last_name:'Khalil',email:'rim.khalil@sesame.com.tn'},
+    ];
+  }
+}
+
+function updateClubUI() {
+  if (!myClub) return;
+  const ms = myClub.memberships || [];
+  members = ms;
+
+  document.getElementById('active-club-name').textContent = myClub.name;
+  document.getElementById('banner-name').textContent = myClub.name;
+  document.getElementById('banner-desc').textContent = myClub.description || 'No description.';
+  document.getElementById('banner-members').textContent = ms.length;
+  document.getElementById('banner-events').textContent = myClub.events?.length || 0;
+
+  const pres = ms.find(m=>m.internal_role==='president');
+  const presUser = pres?.user_detail || currentUser;
+  const presName = presUser ? `${presUser.first_name} ${presUser.last_name}` : 'President';
+  document.getElementById('president-name').textContent = presName;
+  document.getElementById('president-avatar').textContent = initials(presName);
+
+  renderMembers();
+}
+
+function renderMembers() {
+  const grid = document.getElementById('members-grid');
+  let filtered = members;
+  if (roleFilter !== 'all') filtered = members.filter(m=>m.internal_role===roleFilter);
+
+  document.getElementById('member-count-label').textContent = members.length + ' members';
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty"><svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>No members in this category</div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(m => {
+    const u = m.user_detail || {};
+    const name = `${u.first_name||''} ${u.last_name||''}`.trim() || 'Unknown';
+    const email = u.email || '';
+    const style = colorAvatar(email);
+    const badge = roleBadges[m.internal_role] || 'role-member';
+    const label = roleLabels[m.internal_role] || m.internal_role;
+    const isPresident = m.internal_role === 'president';
+    const joined = m.joined_at ? new Date(m.joined_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '';
+
+    return `<div class="member-row">
+      <div class="avatar" style="${style};width:40px;height:40px;font-size:14px">${initials(name)}</div>
+      <div class="member-info">
+        <div class="member-name">${name}</div>
+        <div class="member-email">${email}</div>
+      </div>
+      <div class="member-meta">
+        ${joined ? `<span class="joined-date">Joined ${joined}</span>` : ''}
+        <span class="role-badge ${badge}">${label}</span>
+        ${!isPresident ? `<select class="role-select" onchange="changeRole('${m.id}',this.value)" title="Change role">
+          <option value="vice_president" ${m.internal_role==='vice_president'?'selected':''}>Vice President</option>
+          <option value="secretary" ${m.internal_role==='secretary'?'selected':''}>Secretary</option>
+          <option value="officer" ${m.internal_role==='officer'?'selected':''}>Officer</option>
+          <option value="member" ${m.internal_role==='member'?'selected':''}>Member</option>
+        </select>
+        <button class="btn btn-sm" style="background:rgba(220,38,38,0.08);color:#dc2626;border:1px solid rgba(220,38,38,0.2)" onclick="removeMember('${m.id}','${name}')">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterRole(role, btn) {
+  roleFilter = role;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderMembers();
+}
+
+function searchStudents() {
+  const q = document.getElementById('member-search').value.trim().toLowerCase();
+  const el = document.getElementById('search-results');
+
+  if (!q) {
+    el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">Type to search students...</div>';
+    return;
+  }
+
+  const memberIds = new Set(members.map(m=>m.user||m.user_detail?.id));
+  const results = allStudents.filter(s => {
+    const n = `${s.first_name} ${s.last_name} ${s.email}`.toLowerCase();
+    return n.includes(q);
+  }).slice(0, 8);
+
+  if (!results.length) {
+    el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">No students found</div>';
+    return;
+  }
+
+  el.innerHTML = results.map(s => {
+    const name = `${s.first_name} ${s.last_name}`;
+    const style = colorAvatar(s.email);
+    const isAlready = memberIds.has(s.id);
+    return `<div class="result-item">
+      <div class="avatar" style="${style};width:34px;height:34px;font-size:12px">${initials(name)}</div>
+      <div class="result-info">
+        <div class="result-name">${name}</div>
+        <div class="result-email">${s.email}</div>
+      </div>
+      <div class="result-action">
+        ${isAlready
+          ? `<button class="btn btn-sm btn-added" disabled>
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Added
+            </button>`
+          : `<button class="btn btn-sm btn-add" onclick="addMember('${s.id}','${name}','${s.email}')">
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add
+            </button>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function addMember(userId, name, email) {
+  const clubId = myClub?.id || myClub?.club_id;
+  const result = await apiFetch('/memberships/', {
+    method:'POST',
+    body: JSON.stringify({ user: userId, club: clubId, internal_role:'member', status:'approved' })
+  });
+
+  // Update locally
+  members.push({
+    id: result?.id || ('local-'+Date.now()),
+    user: userId,
+    internal_role: 'member',
+    status: 'approved',
+    joined_at: new Date().toISOString(),
+    user_detail: { id:userId, first_name:name.split(' ')[0], last_name:name.split(' ').slice(1).join(' '), email }
+  });
+  if (myClub) myClub.memberships = members;
+
+  renderMembers();
+  document.getElementById('banner-members').textContent = members.length;
+  searchStudents(); // refresh search results
+  showToast(`${name} added to the club`);
+}
+
+async function changeRole(membershipId, newRole) {
+  await apiFetch(`/memberships/${membershipId}/`, {
+    method:'PATCH',
+    body: JSON.stringify({ internal_role: newRole })
+  });
+
+  const m = members.find(m=>m.id==membershipId);
+  if (m) m.internal_role = newRole;
+  renderMembers();
+  showToast(`Role updated to ${roleLabels[newRole]||newRole}`);
+}
+
+async function removeMember(membershipId, name) {
+  if (!confirm(`Remove ${name} from the club?`)) return;
+  await apiFetch(`/memberships/${membershipId}/`, { method:'DELETE' });
+  members = members.filter(m=>m.id!=membershipId);
+  if (myClub) myClub.memberships = members;
+  renderMembers();
+  document.getElementById('banner-members').textContent = members.length;
+  showToast(`${name} removed from the club`);
+}
+
+// Calendar: FullCalendar integration
+let calendar = null;
+async function loadEventsForClub() {
+  if (!myClub || !myClub.id) return [];
+  const data = await apiFetch(`/events/?club=${myClub.id}`);
+  const events = data?.results || (Array.isArray(data)?data:[]);
+  return events.map(e => ({ id: e.id, title: e.title, start: e.date, end: e.date, extendedProps: { raw: e } }));
+}
+
+function initCalendar() {
+  const calendarEl = document.getElementById('calendar');
+  if (!calendarEl || typeof FullCalendar === 'undefined') return;
+  calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'dayGridMonth',
+    height: 560,
+    headerToolbar: { left: 'title', center: '', right: 'prev,next today dayGridMonth,timeGridWeek,timeGridDay' },
+    events: [],
+    eventClick: async function(info) {
+      const e = info.event;
+      if (!confirm(`Sync event "${e.title}" to your Google Calendar?`)) return;
+      const res = await fetch(`${API}/events/${e.id}/sync_google/`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token?{Authorization:`Bearer ${token}`}:{}) } });
+      if (res.ok) { showToast('Event synced to Google', 'success'); }
+      else { showToast('Failed to sync event to Google', 'error'); }
+    }
+  });
+  calendar.render();
+}
+
+async function refreshCalendar() {
+  if (!calendar) initCalendar();
+  const items = await loadEventsForClub();
+  if (!calendar) return;
+  calendar.removeAllEvents();
+  items.forEach(it => calendar.addEvent(it));
+}
+
+document.getElementById('refresh-events-btn')?.addEventListener('click', refreshCalendar);
+document.getElementById('google-sync-btn')?.addEventListener('click', async function() {
+  // Open auth URL returned by backend
+  const r = await apiFetch('/events/google/auth-url/');
+  if (r && r.auth_url) {
+    window.open(r.auth_url, '_blank');
+    showToast('Google auth opened in new tab. Complete flow to connect.');
+  } else {
+    showToast(r?.error || 'Google auth is not configured on server', 'error');
+  }
+});
+
+// Initialize app
+loadMyClub().then(()=>{ initCalendar(); refreshCalendar(); });
+loadAllStudents();
+</script>
+</body>
+</html>

@@ -3,7 +3,8 @@ from rest_framework.test import APIClient
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from datetime import timedelta
-from clubs.models import Club, Membership
+from users.models import Role
+from clubs.models import Club, ClubMembership
 from events.models import Event, EventRegistration
 
 User = get_user_model()
@@ -15,9 +16,9 @@ class TestDemoScenario:
 
     def test_mi_parcours_demo(self):
         # 1. Setup Users (Admin, Club Manager, Student)
-        admin = User.objects.create_user(username='admin', password='password', role='administrator')
-        manager = User.objects.create_user(username='manager', password='password', role='club_manager')
-        student = User.objects.create_user(username='student', password='password', role='student')
+        admin = User.objects.create_user(username='admin', password='password', role=Role.ADMIN, is_verified=True)
+        manager = User.objects.create_user(username='manager', password='password', role=Role.CLUB_MANAGER, is_verified=True)
+        student = User.objects.create_user(username='student', password='password', role=Role.STUDENT, is_verified=True)
 
         # === Step 1: Admin creates a club 'Tech Club' ===
         self.client.force_authenticate(user=admin)
@@ -28,11 +29,11 @@ class TestDemoScenario:
         })
         assert response.status_code == 201
         club_id = response.data['id']
-        club = Club.objects.get(id=club_id)
+        club = Club.objects.get(pk=club_id)
 
         # Admin assigns Manager to the Club as President (Manual step via admin panel, here we simulate)
         # Actually, let's just create it directly via ORM since we didn't expose a membership CRUD to admin directly in our simplified views
-        Membership.objects.create(user=manager, club=club, internal_role='president', status='approved')
+        ClubMembership.objects.create(user=manager, club=club, internal_role='president', status='approved')
 
         # === Step 2: Student registers and joins the club ===
         self.client.force_authenticate(user=student)
@@ -45,7 +46,7 @@ class TestDemoScenario:
         response = self.client.get('/api/v1/memberships/')
         assert response.status_code == 200
         # Assume manager updates the membership to 'approved'
-        membership = Membership.objects.get(user=student, club=club)
+        membership = ClubMembership.objects.get(user=student, club=club)
         response = self.client.patch(f'/api/v1/memberships/{membership.id}/', {'status': 'approved'})
         assert response.status_code == 200
 
@@ -82,7 +83,7 @@ class TestDemoScenario:
         assert response.status_code == 403
 
         # Manager from another club shouldn't be able to edit this event
-        other_manager = User.objects.create_user(username='manager2', password='password', role='club_manager')
+        other_manager = User.objects.create_user(username='manager2', password='password', role=Role.CLUB_MANAGER, is_verified=True)
         self.client.force_authenticate(user=other_manager)
         response = self.client.patch(f'/api/v1/events/{event_id}/', {'title': 'Hacked Event'})
         assert response.status_code == 403

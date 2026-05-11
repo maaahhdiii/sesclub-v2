@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Ses'Club</title>
+  <script>
+    const STUDENT_KEYS = { access: 'student_access', refresh: 'student_refresh', user: 'student_user' };
+    const CLUB_KEYS = { access: 'club_access', refresh: 'club_refresh', user: 'club_user' };
+    const ADMIN_KEYS = { access: 'admin_token', user: 'admin_user' };
+
+    const hashParams = new URLSearchParams(window.location.hash.slice(1));
+    const hashedAccess = hashParams.get('access');
+    const hashedRefresh = hashParams.get('refresh');
+    const hashedUser = hashParams.get('user');
+
+    if (hashedAccess && hashedRefresh && hashedUser) {
+      let parsedUser = null;
+      try {
+        parsedUser = JSON.parse(hashedUser);
+      } catch (e) {
+        parsedUser = null;
+      }
+
+      const role = (parsedUser?.role || '').toLowerCase();
+      if (role === 'administrator') {
+        sessionStorage.setItem(ADMIN_KEYS.access, hashedAccess);
+        sessionStorage.setItem(ADMIN_KEYS.user, JSON.stringify(parsedUser));
+      } else if (role === 'club_manager') {
+        localStorage.setItem(CLUB_KEYS.access, hashedAccess);
+        localStorage.setItem(CLUB_KEYS.refresh, hashedRefresh);
+        localStorage.setItem(CLUB_KEYS.user, JSON.stringify(parsedUser));
+      } else {
+        localStorage.setItem(STUDENT_KEYS.access, hashedAccess);
+        localStorage.setItem(STUDENT_KEYS.refresh, hashedRefresh);
+        localStorage.setItem(STUDENT_KEYS.user, JSON.stringify(parsedUser));
+      }
+      history.replaceState(null, '', window.location.pathname);
+    }
+
+    const adminUser = JSON.parse(sessionStorage.getItem(ADMIN_KEYS.user) || 'null');
+    const adminToken = sessionStorage.getItem(ADMIN_KEYS.access);
+    const clubUser = JSON.parse(localStorage.getItem(CLUB_KEYS.user) || 'null');
+    const clubToken = localStorage.getItem(CLUB_KEYS.access);
+    const studentUser = JSON.parse(localStorage.getItem(STUDENT_KEYS.user) || 'null');
+    const studentToken = localStorage.getItem(STUDENT_KEYS.access);
+
+    if (adminToken && adminUser) {
+      window.location.href = '/admin-page/';
+    } else if (clubToken && clubUser) {
+      window.location.href = '/club/';
+    } else if (studentToken && studentUser) {
+      window.location.href = '/student/';
+    } else {
+      window.location.href = '/student/';
+    }
+  </script>
+</head>
+<body>
+  <p style="font-family:sans-serif;color:#fff;background:#050d1a;height:100vh;display:flex;align-items:center;justify-content:center;margin:0">Chargement...</p>
+</body>
+</html>

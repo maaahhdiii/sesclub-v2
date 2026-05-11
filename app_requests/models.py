@@ -29,6 +29,13 @@ class Request(models.Model):
     
     # Implicit relationship based on logical context: request made by user
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='requests', null=True, blank=True)
+    treated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name='treated_requests',
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         ordering = ['-created_at']

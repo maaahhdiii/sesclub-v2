@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SES Club API Tester</title>
+  <style>
+    :root {
+      --bg: #08131f;
+      --bg-soft: rgba(10, 25, 39, 0.9);
+      --line: rgba(117, 149, 180, 0.18);
+      --radius: 18px;
+      --shadow: 0 30px 60px rgba(0, 0, 0, 0.35);
+      --text: #eef6ff;
+      --muted: #9fb6ca;
+      --accent: #42c2ff;
+      --ok: #79f2b5;
+      --warn: #ffcf5b;
+      --danger: #ff7c7c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(66, 194, 255, 0.16), transparent 30%),
+        radial-gradient(circle at top right, rgba(122, 240, 193, 0.10), transparent 28%),
+        linear-gradient(180deg, #091420 0%, #061019 100%);
+      color: var(--text);
+    }
+
+    button {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid transparent;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease, opacity 120ms ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .app {
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap: 14px;
+      height: 100vh;
+      padding: 14px;
+    }
+
+    .panel {
+      background: var(--bg-soft);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      overflow: hidden;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .sidebar header,
+    .workspace header {
+      padding: 18px 18px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .title {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.05;
+      letter-spacing: 0.2px;
+    }
+
+    .subtitle,
+    .meta,
+    .small {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .sidebar-body,
+    .workspace-body {
+      padding: 14px 16px 16px;
+      overflow: auto;
+      min-height: 0;
+    }
+
+    .group {
+      margin-bottom: 16px;
+      padding: 14px;
+      background: rgba(8, 19, 31, 0.52);
+      border: 1px solid rgba(117, 149, 180, 0.10);
+      border-radius: 16px;
+    }
+
+    .group h3 {
+      margin: 0 0 10px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #d9e8f7;
+    }
+
+    .navlist {
+      display: grid;
+      gap: 8px;
+    }
+
+    .navlist button,
+    .action button,
+    .inline-actions button {
+      width: 100%;
+      padding: 10px 12px;
+      text-align: left;
+      background: #0a1927;
+      color: var(--text);
+      border-color: rgba(117, 149, 180, 0.14);
+    }
+
+    .navlist button:hover,
+    .action button:hover,
+    .inline-actions button:hover {
+      border-color: rgba(66, 194, 255, 0.55);
+      background: #10253a;
+    }
+
+    .navlist button.active {
+      border-color: rgba(66, 194, 255, 0.90);
+      background: linear-gradient(135deg, rgba(66, 194, 255, 0.18), rgba(122, 240, 193, 0.12));
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(8, 19, 31, 0.7);
+      border: 1px solid rgba(117, 149, 180, 0.15);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr 1fr 220px;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.03em;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid rgba(117, 149, 180, 0.18);
+      background: rgba(5, 15, 24, 0.8);
+      color: var(--text);
+      padding: 11px 12px;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 140px;
+      resize: vertical;
+      font-family: Consolas, Monaco, monospace;
+      line-height: 1.45;
+    }
+
+    .workspace-body {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
+      gap: 14px;
+    }
+
+    .card {
+      background: rgba(8, 18, 29, 0.66);
+      border: 1px solid rgba(117, 149, 180, 0.14);
+      border-radius: 16px;
+      padding: 14px;
+      min-width: 0;
+    }
+
+    .request-head {
+      display: grid;
+      grid-template-columns: 132px minmax(0, 1fr) 148px 148px;
+      gap: 10px;
+      align-items: end;
+      margin-bottom: 10px;
+    }
+
+    .request-head .send {
+      background: linear-gradient(135deg, var(--accent), #74e0ff);
+      color: #04131d;
+      font-weight: 700;
+    }
+
+    .request-head .secondary,
+    .toolbar .secondary,
+    .mini.secondary {
+      background: #122132;
+      color: var(--text);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .toolbar button,
+    .mini {
+      padding: 9px 12px;
+      border-color: rgba(117, 149, 180, 0.18);
+      background: #0c1a29;
+      color: var(--text);
+    }
+
+    .two-cols {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 12px;
+    }
+
+    .section {
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+      color: #dce9f6;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    pre {
+      margin: 0;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(117, 149, 180, 0.14);
+      background: rgba(5, 15, 24, 0.82);
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: Consolas, Monaco, monospace;
+      min-height: 240px;
+      max-height: 500px;
+      overflow: auto;
+    }
+
+    .response-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(117, 149, 180, 0.18);
+      background: rgba(8, 19, 31, 0.7);
+      font-size: 12px;
+    }
+
+    .status-ok { color: var(--ok); border-color: rgba(121, 242, 181, 0.35); }
+    .status-bad { color: var(--danger); border-color: rgba(255, 124, 124, 0.38); }
+    .status-warn { color: var(--warn); border-color: rgba(255, 207, 91, 0.38); }
+
+    .stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .compact-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .inline-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .note {
+      border-left: 3px solid rgba(66, 194, 255, 0.65);
+      padding: 10px 12px;
+      background: rgba(8, 19, 31, 0.6);
+      border-radius: 0 12px 12px 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    @media (max-width: 1180px) {
+      .app { grid-template-columns: 1fr; height: auto; }
+      .workspace-body { grid-template-columns: 1fr; }
+      .topbar { grid-template-columns: 1fr 1fr; }
+      .request-head { grid-template-columns: 120px 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .topbar, .request-head, .two-cols, .inline-actions { grid-template-columns: 1fr; }
+      .workspace { grid-template-rows: auto auto auto; }
+      .sidebar { min-height: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="panel sidebar">
+      <header>
+        <h1 class="title">SES Club API Tester</h1>
+        <div class="subtitle">Create an account, verify it, log in, and test every API from one simple page.</div>
+      </header>
+      <div class="sidebar-body">
+        <div class="group">
+          <h3>Start here</h3>
+          <div class="navlist">
+            <button id="runBeginnerAuthBtn" class="active">Easy account flow</button>
+            <button id="openGoogle" class="active">Google login</button>
+            <button id="openGoogleSuccess">Google success page</button>
+            <button id="runFullSuiteBtn">Run all tests</button>
+            <button id="runAuthSuiteBtn">Account tests</button>
+            <button id="runCollabSuiteBtn">Club and event tests</button>
+            <button id="runAdminSuiteBtn">Admin tests</button>
+          </div>
+        </div>
+
+        <div class="group">
+          <h3>All tests</h3>
+          <div id="endpointList" class="navlist"></div>
+        </div>
+
+        <div class="group">
+          <h3>Saved tokens</h3>
+          <div class="compact-grid">
+            <input id="savedName" placeholder="token label" />
+            <input id="savedToken" placeholder="paste access token" />
+            <div class="inline-actions">
+              <button id="saveTokenBtn" class="mini secondary">Save</button>
+              <button id="loadTokenBtn" class="mini secondary">Load selected</button>
+            </div>
+            <select id="tokenList" size="5"></select>
+          </div>
+        </div>
+
+        <div class="group">
+          <h3>Your progress</h3>
+          <div class="chip-row" id="stateChips">
+            <span class="chip">No tokens loaded</span>
+          </div>
+          <div class="note" style="margin-top:12px;">
+            Fast path: use the Easy account flow first. It creates a test student, grabs the verification code, logs in,
+            and opens the account page with the token ready.
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <section class="panel workspace">
+      <header>
+        <div class="topbar">
+          <div class="section" style="margin-bottom:16px;">
+            <div class="section-title">
+              <span>Start here</span>
+              <span class="muted">The easiest path for new users</span>
+            </div>
+            <div class="toolbar" style="margin-bottom:0;">
+              <button id="easyRegisterBtn">1. Register</button>
+              <button id="easyVerifyBtn">2. Verify</button>
+              <button id="easyLoginBtn">3. Login</button>
+              <button id="easyMeBtn">4. Show my account</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Base URL</label>
+            <input id="baseUrl" value="http://127.0.0.1:8000" />
+          </div>
+          <div class="field">
+            <label>Active token</label>
+            <input id="activeToken" placeholder="current bearer token" />
+          </div>
+          <div class="field">
+            <label>Auth source</label>
+            <select id="authSource">
+              <option value="active">Active token</option>
+              <option value="student">Student token</option>
+              <option value="admin">Admin token</option>
+              <option value="none">No token</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Expected status</label>
+            <input id="expectedStatus" type="number" value="200" />
+          </div>
+        </div>
+      </header>
+
+      <div class="workspace-body">
+        <div class="card">
+          <div class="section">
+            <div class="section-title">
+              <span>Request maker</span>
+              <span class="muted">Pick a test or type your own</span>
+            </div>
+            <div class="request-head">
+              <div class="field">
+                <label>Action</label>
+                <select id="method">
+                  <option>GET</option>
+                  <option>POST</option>
+                  <option>PUT</option>
+                  <option>PATCH</option>
+                  <option>DELETE</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>API path</label>
+                <input id="path" placeholder="/api/v1/..." />
+              </div>
+              <button id="sendBtn" class="send">Send</button>
+              <button id="clearLogBtn" class="secondary">Clear log</button>
+            </div>
+
+            <div class="two-cols">
+              <div class="field">
+                <label>Request body</label>
+                <textarea id="body">{}</textarea>
+              </div>
+              <div class="field">
+                <label>Extra headers</label>
+                <textarea id="headers">{}</textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">
+              <span>Test shortcuts</span>
+              <span class="muted">Click to load a common test</span>
+            </div>
+            <div id="templateButtons" class="toolbar"></div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">
+              <span>Simple steps</span>
+              <span class="muted">Create data, then use it in later tests</span>
+            </div>
+            <div class="toolbar">
+              <button id="createStudentBtn">Create account</button>
+              <button id="loginStudentBtn">Log in</button>
+              <button id="verifyCodeBtn">Verify email</button>
+              <button id="resendCodeBtn">Send new code</button>
+              <button id="meBtn">Show account</button>
+              <button id="refreshBtn">Refresh token</button>
+            </div>
+            <div class="two-cols">
+              <div class="compact-grid">
+                <input id="studentEmail" placeholder="student email" />
+                <input id="studentPassword" type="password" placeholder="student password" value="Password123!" />
+                <input id="verificationCode" placeholder="6-digit verification code" />
+              </div>
+              <div class="compact-grid">
+                <input id="adminEmail" placeholder="admin email" />
+                <input id="adminPassword" type="password" placeholder="admin password" />
+                <div class="inline-actions">
+                  <button id="loadStudentTokenBtn" class="mini secondary">Use student token</button>
+                  <button id="loadAdminTokenBtn" class="mini secondary">Use admin token</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">
+              <span>Saved IDs</span>
+              <span class="muted">Copied from earlier tests so you can reuse them</span>
+            </div>
+            <div class="two-cols">
+              <div class="compact-grid">
+                <input id="clubId" placeholder="club id" />
+                <input id="membershipId" placeholder="membership id" />
+                <input id="eventId" placeholder="event id" />
+                <input id="registrationId" placeholder="registration id" />
+              </div>
+              <div class="compact-grid">
+                <input id="conversationId" placeholder="conversation id" />
+                <input id="messageId" placeholder="message id" />
+                <input id="requestId" placeholder="request id" />
+                <input id="userId" placeholder="user id" />
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">
+              <span>Server response</span>
+              <span id="responseSummary" class="muted">No request yet</span>
+            </div>
+            <div class="response-meta" id="responseMeta"></div>
+            <pre id="response">No request yet.</pre>
+          </div>
+        </div>
+
+        <div class="stack">
+          <div class="card">
+            <div class="section-title">
+              <span>Log</span>
+              <span class="muted">What happened and what the server returned</span>
+            </div>
+            <pre id="log">Ready.</pre>
+          </div>
+
+          <div class="card">
+            <div class="section-title">
+              <span>What this covers</span>
+              <span class="muted">Everything in the current test suite</span>
+            </div>
+            <div class="note">
+              You can test account creation, email verification, login, Google sign-in, clubs, events, requests,
+              conversations, messages, audit logs, and admin-only actions from this page.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const storageKeys = {
+      tokens: 'sesclub_testbench_tokens_v2',
+      state: 'sesclub_testbench_state_v2',
+      history: 'sesclub_testbench_history_v2',
+    };
+
+    const endpointTemplates = [
+      { label: 'Auth - register', method: 'POST', path: '/api/v1/auth/register/', body: { email: 'student@sesame.com.tn', first_name: 'Test', last_name: 'User', password: 'Password123!' }, auth: 'none', expected: 201 },
+      { label: 'Auth - login', method: 'POST', path: '/api/v1/auth/login/', body: { email: 'student@sesame.com.tn', password: 'Password123!' }, auth: 'none', expected: 200 },
+      { label: 'Auth - verify code', method: 'POST', path: '/api/v1/auth/verify-code/', body: { code: '123456' }, auth: 'active', expected: 200 },
+      { label: 'Auth - refresh', method: 'POST', path: '/api/v1/auth/refresh/', body: { refresh: 'PASTE_REFRESH_TOKEN' }, auth: 'none', expected: 200 },
+      { label: 'Auth - verify token', method: 'POST', path: '/api/v1/auth/verify/', body: { token: 'PASTE_ACCESS_OR_REFRESH_TOKEN' }, auth: 'none', expected: 200 },
+      { label: 'Auth - me', method: 'GET', path: '/api/v1/auth/me/', body: {}, auth: 'active', expected: 200 },
+      { label: 'Auth - resend code', method: 'POST', path: '/api/v1/auth/resend-code/', body: {}, auth: 'active', expected: 200 },
+      { label: 'Clubs - list', method: 'GET', path: '/api/v1/clubs/', body: {}, auth: 'active', expected: 200 },
+      { label: 'Clubs - create', method: 'POST', path: '/api/v1/clubs/', body: { name: 'Robotics Club', description: 'Built from the test bench', is_active: true }, auth: 'active', expected: 201 },
+      { label: 'Clubs - join', method: 'POST', path: '/api/v1/clubs/CLUB_ID/join/', body: {}, auth: 'active', expected: 200 },
+      { label: 'Memberships - list', method: 'GET', path: '/api/v1/memberships/', body: {}, auth: 'active', expected: 200 },
+      { label: 'Memberships - patch', method: 'PATCH', path: '/api/v1/memberships/MEMBERSHIP_ID/', body: { status: 'approved' }, auth: 'admin', expected: 200 },
+      { label: 'Events - list', method: 'GET', path: '/api/v1/events/', body: {}, auth: 'active', expected: 200 },
+      { label: 'Events - create', method: 'POST', path: '/api/v1/events/', body: { title: 'Hackathon Night', description: 'Created from the front end', club: 'CLUB_ID', location: 'Main Hall', date: '2026-12-25T18:00:00Z', capacity: 50, status: 'published' }, auth: 'active', expected: 201 },
+      { label: 'Events - register', method: 'POST', path: '/api/v1/events/EVENT_ID/register/', body: {}, auth: 'active', expected: 201 },
+      { label: 'Events - unregister', method: 'DELETE', path: '/api/v1/events/EVENT_ID/unregister/', body: {}, auth: 'active', expected: 200 },
+      { label: 'Registrations - list', method: 'GET', path: '/api/v1/registrations/', body: {}, auth: 'admin', expected: 200 },
+      { label: 'Requests - create', method: 'POST', path: '/api/v1/requests/', body: { request_type: 'CLUB CREATION', title: 'Create a music club', description: 'We want a music club.', metadata: {} }, auth: 'active', expected: 201 },
+      { label: 'Requests - list', method: 'GET', path: '/api/v1/requests/', body: {}, auth: 'active', expected: 200 },
+      { label: 'Requests - update status', method: 'PATCH', path: '/api/v1/requests/REQUEST_ID/update_status/', body: { status: 'TREATED' }, auth: 'admin', expected: 200 },
+      { label: 'Conversations - create', method: 'POST', path: '/api/v1/conversations/', body: {}, auth: 'active', expected: 201 },
+      { label: 'Messages - send', method: 'POST', path: '/api/v1/conversations/CONVERSATION_ID/messages/', body: { body: 'Hello from the test bench' }, auth: 'active', expected: 201 },
+      { label: 'Audit - list', method: 'GET', path: '/api/v1/audit-logs/', body: {}, auth: 'admin', expected: 200 },
+      { label: 'Users - list', method: 'GET', path: '/api/v1/users/', body: {}, auth: 'admin', expected: 200 },
+      { label: 'Google - start', method: 'GET', path: '/api/v1/auth/google/login/google-oauth2/', body: {}, auth: 'none', expected: 200 },
+      { label: 'Google - success', method: 'GET', path: '/api/v1/auth/google/success/', body: {}, auth: 'none', expected: 200 },
+      { label: 'Google - callback', method: 'GET', path: '/api/v1/auth/google/complete/', body: {}, auth: 'none', expected: 200 },
+      { label: 'Google - error', method: 'GET', path: '/api/v1/auth/google/error/', body: {}, auth: 'none', expected: 400 },
+      { label: 'Protected - clubs without token', method: 'GET', path: '/api/v1/clubs/', body: {}, auth: 'none', expected: 401 },
+      { label: 'Protected - clubs with unverified user', method: 'GET', path: '/api/v1/clubs/', body: {}, auth: 'active', expected: 403 },
+    ];
+
+    const flowTemplates = [
+      { label: 'Register student', method: 'POST', path: '/api/v1/auth/register/', body: () => ({ email: `tester-${Date.now()}@sesame.com.tn`, first_name: 'Auto', last_name: 'Tester', password: 'Password123!' }), auth: 'none', expected: 201, store: (payload) => {
+        setValue('studentEmail', payload.email || getValue('studentEmail'));
+        if (payload.verification_code) {
+          setValue('verificationCode', payload.verification_code);
+        }
+      } },
+      { label: 'Login student', method: 'POST', path: '/api/v1/auth/login/', body: () => ({ email: getValue('studentEmail'), password: getValue('studentPassword') }), auth: 'none', expected: 200 },
+      { label: 'Verify code', method: 'POST', path: '/api/v1/auth/verify-code/', body: () => ({ code: getValue('verificationCode') }), auth: 'active', expected: 200 },
+      { label: 'Clubs list', method: 'GET', path: '/api/v1/clubs/', body: () => ({}), auth: 'active', expected: 200 },
+      { label: 'Create club', method: 'POST', path: '/api/v1/clubs/', body: () => ({ name: 'Frontend Club', description: 'Generated by the test bench', is_active: true }), auth: 'active', expected: 201 },
+      { label: 'Join club', method: 'POST', path: () => `/api/v1/clubs/${getValue('clubId')}/join/`, body: () => ({}), auth: 'active', expected: 200 },
+      { label: 'Events create', method: 'POST', path: '/api/v1/events/', body: () => ({ title: 'Launch Night', description: 'Created from the UI', club: getValue('clubId'), location: 'Auditorium', date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), capacity: 75, status: 'published' }), auth: 'active', expected: 201 },
+      { label: 'Event register', method: 'POST', path: () => `/api/v1/events/${getValue('eventId')}/register/`, body: () => ({}), auth: 'active', expected: 201 },
+      { label: 'Request create', method: 'POST', path: '/api/v1/requests/', body: () => ({ request_type: 'CLUB CREATION', title: 'Need a chess club', description: 'Students asked for a chess club.', metadata: {} }), auth: 'active', expected: 201 },
+      { label: 'Conversation create', method: 'POST', path: '/api/v1/conversations/', body: () => ({}), auth: 'active', expected: 201 },
+      { label: 'Message send', method: 'POST', path: () => `/api/v1/conversations/${getValue('conversationId')}/messages/`, body: () => ({ body: 'Test message' }), auth: 'active', expected: 201 },
+    ];
+
+    const state = loadJson(storageKeys.state, {
+      studentEmail: '',
+      studentPassword: 'Password123!',
+      adminEmail: '',
+      adminPassword: '',
+      activeToken: '',
+      studentToken: '',
+      adminToken: '',
+      clubId: '',
+      membershipId: '',
+      eventId: '',
+      registrationId: '',
+      conversationId: '',
+      messageId: '',
+      requestId: '',
+      userId: '',
+      verificationCode: '',
+      authSource: 'active',
+      expectedStatus: 200,
+    });
+
+    function loadJson(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (error) {
+        return fallback;
+      }
+    }
+
+    function saveState() {
+      state.studentEmail = getValue('studentEmail');
+      state.studentPassword = getValue('studentPassword');
+      state.adminEmail = getValue('adminEmail');
+      state.adminPassword = getValue('adminPassword');
+      state.activeToken = getValue('activeToken');
+      state.studentToken = state.studentToken || '';
+      state.adminToken = state.adminToken || '';
+      state.clubId = getValue('clubId');
+      state.membershipId = getValue('membershipId');
+      state.eventId = getValue('eventId');
+      state.registrationId = getValue('registrationId');
+      state.conversationId = getValue('conversationId');
+      state.messageId = getValue('messageId');
+      state.requestId = getValue('requestId');
+      state.userId = getValue('userId');
+      state.verificationCode = getValue('verificationCode');
+      state.authSource = getValue('authSource');
+      state.expectedStatus = Number(getValue('expectedStatus') || 200);
+      localStorage.setItem(storageKeys.state, JSON.stringify(state));
+      renderStateChips();
+    }
+
+    function getValue(id) {
+      const element = document.getElementById(id);
+      return element ? element.value.trim() : '';
+    }
+
+    function setValue(id, value) {
+      const element = document.getElementById(id);
+      if (element) element.value = value ?? '';
+    }
+
+    function renderStateChips() {
+      const chips = [];
+      if (state.studentToken) chips.push(`student token ready`);
+      if (state.adminToken) chips.push(`admin token ready`);
+      if (state.clubId) chips.push(`club ${state.clubId}`);
+      if (state.eventId) chips.push(`event ${state.eventId}`);
+      if (state.conversationId) chips.push(`conversation ${state.conversationId}`);
+      if (state.requestId) chips.push(`request ${state.requestId}`);
+      if (!chips.length) chips.push('No tokens loaded');
+      const container = document.getElementById('stateChips');
+      container.innerHTML = chips.map((chip) => `<span class="chip">${escapeHtml(chip)}</span>`).join('');
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function log(message, kind = 'info') {
+      const stamp = new Date().toISOString();
+      const line = `[${stamp}] ${message}`;
+      const current = document.getElementById('log').textContent;
+      document.getElementById('log').textContent = `${line}\n${current}`;
+      if (kind === 'error') {
+        console.error(line);
+      } else {
+        console.log(line);
+      }
+      const history = loadJson(storageKeys.history, []);
+      history.unshift(line);
+      localStorage.setItem(storageKeys.history, JSON.stringify(history.slice(0, 200)));
+    }
+
+    function setTemplate(template) {
+      const body = typeof template.body === 'function' ? template.body() : (template.body ?? {});
+      const path = typeof template.path === 'function' ? template.path() : template.path;
+      setValue('method', template.method || 'GET');
+      setValue('path', path || '');
+      setValue('body', Object.keys(body || {}).length ? JSON.stringify(body, null, 2) : '{}');
+      setValue('headers', '{}');
+      setValue('authSource', template.auth || 'active');
+      setValue('expectedStatus', template.expected ?? 200);
+      saveState();
+      activateNav(template.label);
+      log(`Loaded template: ${template.label}`);
+    }
+
+    function activateNav(label) {
+      document.querySelectorAll('.navlist button[data-label]').forEach((button) => {
+        button.classList.toggle('active', button.dataset.label === label);
+      });
+    }
+
+    function renderEndpointList() {
+      const container = document.getElementById('endpointList');
+      const buttons = [];
+      endpointTemplates.forEach((template) => {
+        buttons.push(`<button data-label="${escapeHtml(template.label)}">${escapeHtml(template.label)}</button>`);
+      });
+      container.innerHTML = buttons.join('');
+      container.querySelectorAll('button[data-label]').forEach((button, index) => {
+        button.addEventListener('click', () => setTemplate(endpointTemplates[index]));
+      });
+    }
+
+    function renderTemplateButtons() {
+      const container = document.getElementById('templateButtons');
+      container.innerHTML = flowTemplates.map((template) => `<button class="mini secondary" data-flow="${escapeHtml(template.label)}">${escapeHtml(template.label)}</button>`).join('');
+      container.querySelectorAll('button[data-flow]').forEach((button, index) => {
+        button.addEventListener('click', () => setTemplate(flowTemplates[index]));
+      });
+    }
+
+    function resolveAuthToken(mode) {
+      if (mode === 'none') return '';
+      if (mode === 'student') return state.studentToken || '';
+      if (mode === 'admin') return state.adminToken || '';
+      return getValue('activeToken');
+    }
+
+    function replacePathTokens(path) {
+      return path
+        .replaceAll('CLUB_ID', getValue('clubId'))
+        .replaceAll('MEMBERSHIP_ID', getValue('membershipId'))
+        .replaceAll('EVENT_ID', getValue('eventId'))
+        .replaceAll('REGISTRATION_ID', getValue('registrationId'))
+        .replaceAll('CONVERSATION_ID', getValue('conversationId'))
+        .replaceAll('MESSAGE_ID', getValue('messageId'))
+        .replaceAll('REQUEST_ID', getValue('requestId'));
+    }
+
+    function replaceBodyTokens(value) {
+      if (value === null || value === undefined) return value;
+      if (typeof value === 'string') {
+        return value
+          .replaceAll('CLUB_ID', getValue('clubId'))
+          .replaceAll('MEMBERSHIP_ID', getValue('membershipId'))
+          .replaceAll('EVENT_ID', getValue('eventId'))
+          .replaceAll('REGISTRATION_ID', getValue('registrationId'))
+          .replaceAll('CONVERSATION_ID', getValue('conversationId'))
+          .replaceAll('MESSAGE_ID', getValue('messageId'))
+          .replaceAll('REQUEST_ID', getValue('requestId'))
+          .replaceAll('PASTE_REFRESH_TOKEN', state.refreshToken || '')
+          .replaceAll('PASTE_ACCESS_OR_REFRESH_TOKEN', state.activeToken || getValue('activeToken'));
+      }
+      if (Array.isArray(value)) return value.map(replaceBodyTokens);
+      if (typeof value === 'object') {
+        return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, replaceBodyTokens(entry)]));
+      }
+      return value;
+    }
+
+    async function sendRequest(overrides = {}) {
+      const baseUrl = (getValue('baseUrl') || 'http://127.0.0.1:8000').replace(/\/+$/, '');
+      const method = overrides.method || getValue('method') || 'GET';
+      const rawPath = overrides.path || getValue('path') || '/';
+      const path = replacePathTokens(rawPath);
+      const authSource = overrides.auth || getValue('authSource') || 'active';
+      const expectedStatus = Number(overrides.expected ?? getValue('expectedStatus') ?? 200);
+      let headers = { Accept: 'application/json' };
+      const headerText = overrides.headersText ?? getValue('headers') ?? '{}';
+      try {
+        const parsedHeaders = headerText.trim() ? JSON.parse(headerText) : {};
+        headers = { ...headers, ...parsedHeaders };
+      } catch (error) {
+        setResponse('Headers JSON is invalid: ' + error.message, 0, 'error');
+        log('Invalid headers JSON', 'error');
+        return { ok: false, error };
+      }
+
+      const token = resolveAuthToken(authSource);
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      let body = null;
+      const bodyText = overrides.bodyText ?? getValue('body') ?? '';
+      if (method !== 'GET' && method !== 'HEAD' && bodyText.trim()) {
+        try {
+          body = replaceBodyTokens(JSON.parse(bodyText));
+        } catch (error) {
+          setResponse('Body JSON is invalid: ' + error.message, 0, 'error');
+          log('Invalid body JSON', 'error');
+          return { ok: false, error };
+        }
+      }
+
+      if (body && !headers['Content-Type']) {
+        headers['Content-Type'] = 'application/json';
+      }
+
+      const url = `${baseUrl}${path.startsWith('/') ? path : '/' + path}`;
+      log(`→ ${method} ${url}`);
+
+      try {
+        const response = await fetch(url, {
+          method,
+          headers,
+          body: body ? JSON.stringify(body) : undefined,
+        });
+        const text = await response.text();
+        let payload = text;
+        try {
+          payload = text ? JSON.parse(text) : text;
+        } catch (error) {
+          // Keep text body.
+        }
+
+        setResponse(payload, response.status, response.ok ? 'ok' : 'bad');
+        const passFail = response.status === expectedStatus ? 'PASS' : `FAIL expected ${expectedStatus}`;
+        log(`← ${response.status} ${response.statusText} [${passFail}]`);
+        storeArtifacts(method, path, response.status, payload);
+        captureIdentifiers(path, response.status, payload);
+        return { ok: response.ok, status: response.status, payload };
+      } catch (error) {
+        setResponse(String(error), 0, 'error');
+        log(`NETWORK ERROR: ${error.message}`, 'error');
+        return { ok: false, error };
+      }
+    }
+
+    function setResponse(payload, status, tone) {
+      const summary = document.getElementById('responseSummary');
+      const meta = document.getElementById('responseMeta');
+      summary.textContent = status ? `HTTP ${status}` : 'No status';
+      summary.className = `muted ${tone === 'ok' ? 'status-ok' : tone === 'bad' ? 'status-bad' : tone === 'warn' ? 'status-warn' : ''}`;
+      meta.innerHTML = [
+        status ? `<span class="status-pill ${status >= 200 && status < 300 ? 'status-ok' : 'status-bad'}">${status}</span>` : '',
+        `<span class="status-pill">${escapeHtml(getValue('method') || 'GET')}</span>`,
+        `<span class="status-pill">${escapeHtml(getValue('path') || '')}</span>`,
+      ].filter(Boolean).join('');
+      document.getElementById('response').textContent = typeof payload === 'string' ? payload : JSON.stringify(payload, null, 2);
+    }
+
+    function storeArtifacts(method, path, status, payload) {
+      const history = loadJson(storageKeys.history, []);
+      history.unshift({ method, path, status, payload, at: new Date().toISOString() });
+      localStorage.setItem(storageKeys.history, JSON.stringify(history.slice(0, 100)));
+    }
+
+    function captureIdentifiers(path, status, payload) {
+      if (!payload || typeof payload !== 'object') return;
+      const normalizedPath = String(path);
+      const data = payload;
+
+      if (normalizedPath.includes('/auth/login/') && data.access) {
+        state.studentToken = data.access;
+        state.refreshToken = data.refresh || state.refreshToken || '';
+        setValue('activeToken', data.access);
+        setValue('authSource', 'active');
+        log('Captured student access token from login');
+      }
+
+      if (normalizedPath.includes('/auth/refresh/') && data.access) {
+        setValue('activeToken', data.access);
+        state.studentToken = data.access;
+        log('Updated access token from refresh');
+      }
+
+      if (normalizedPath.includes('/auth/register/') && data.email) {
+        state.studentEmail = data.email;
+        setValue('studentEmail', data.email);
+      }
+
+      const id = data.id || data.pk || data.club_id || data.event_id || data.request_id || data.conversation_id || data.message_id;
+      if (normalizedPath === '/api/v1/clubs/' && methodIs(normalizedPath, 'POST') && id !== undefined) {
+        setValue('clubId', id);
+        state.clubId = String(id);
+        log(`Captured club id: ${id}`);
+      }
+      if (normalizedPath.includes('/join/') && data.id !== undefined) {
+        setValue('membershipId', data.id);
+        state.membershipId = String(data.id);
+        log(`Captured membership id: ${data.id}`);
+      }
+      if (normalizedPath === '/api/v1/events/' && methodIs(normalizedPath, 'POST') && id !== undefined) {
+        setValue('eventId', id);
+        state.eventId = String(id);
+        log(`Captured event id: ${id}`);
+      }
+      if (normalizedPath.includes('/register/') && data.status === 'registered') {
+        state.registrationId = state.registrationId || '';
+      }
+      if (normalizedPath === '/api/v1/requests/' && methodIs(normalizedPath, 'POST') && id !== undefined) {
+        setValue('requestId', id);
+        state.requestId = String(id);
+        log(`Captured request id: ${id}`);
+      }
+      if (normalizedPath === '/api/v1/conversations/' && methodIs(normalizedPath, 'POST') && id !== undefined) {
+        setValue('conversationId', id);
+        state.conversationId = String(id);
+        log(`Captured conversation id: ${id}`);
+      }
+      if (normalizedPath.includes('/messages/') && methodIs(normalizedPath, 'POST') && id !== undefined) {
+        setValue('messageId', id);
+        state.messageId = String(id);
+        log(`Captured message id: ${id}`);
+      }
+      if (normalizedPath.includes('/users/') && Array.isArray(data.results) && data.results[0]?.id !== undefined) {
+        setValue('userId', data.results[0].id);
+        state.userId = String(data.results[0].id);
+      }
+
+      saveState();
+    }
+
+    function methodIs(path, method) {
+      return String(getValue('method') || '').toUpperCase() === method && String(path).length > 0;
+    }
+
+    function setContextField(id, value) {
+      setValue(id, value);
+      saveState();
+    }
+
+    async function createStudentAccount() {
+      const email = `tester-${Date.now()}@sesame.com.tn`;
+      setContextField('studentEmail', email);
+      setValue('method', 'POST');
+      setValue('path', '/api/v1/auth/register/');
+      setValue('body', JSON.stringify({ email, first_name: 'Auto', last_name: 'Tester', password: getValue('studentPassword') || 'Password123!' }, null, 2));
+      setValue('authSource', 'none');
+      setValue('expectedStatus', 201);
+      await sendRequest();
+    }
+
+    async function loginStudent() {
+      const email = getValue('studentEmail');
+      if (!email) {
+        log('Student email is empty', 'error');
+        return;
+      }
+      setValue('method', 'POST');
+      setValue('path', '/api/v1/auth/login/');
+      setValue('body', JSON.stringify({ email, password: getValue('studentPassword') || 'Password123!' }, null, 2));
+      setValue('authSource', 'none');
+      setValue('expectedStatus', 200);
+      await sendRequest();
+    }
+
+    async function verifyCode() {
+      setValue('method', 'POST');
+      setValue('path', '/api/v1/auth/verify-code/');
+      setValue('body', JSON.stringify({ code: getValue('verificationCode') }, null, 2));
+      setValue('authSource', 'active');
+      setValue('expectedStatus', 200);
+      await sendRequest();
+    }
+
+    async function resendCode() {
+      setValue('method', 'POST');
+      setValue('path', '/api/v1/auth/resend-code/');
+      setValue('body', '{}');
+      setValue('authSource', 'active');
+      setValue('expectedStatus', 200);
+      await sendRequest();
+    }
+
+    async function getMe() {
+      setValue('method', 'GET');
+      setValue('path', '/api/v1/auth/me/');
+      setValue('body', '{}');
+      setValue('authSource', 'active');
+      setValue('expectedStatus', 200);
+      await sendRequest();
+    }
+
+    async function refreshToken() {
+      const refresh = state.refreshToken || '';
+      setValue('method', 'POST');
+      setValue('path', '/api/v1/auth/refresh/');
+      setValue('body', JSON.stringify({ refresh }, null, 2));
+      setValue('authSource', 'none');
+      setValue('expectedStatus', 200);
+      const result = await sendRequest();
+      if (result?.payload?.access) {
+        state.studentToken = result.payload.access;
+        setValue('activeToken', result.payload.access);
+        saveState();
+      }
+    }
+
+    async function runScenarioSet(scenarios, label) {
+      log(`Starting ${label}`);
+      for (const scenario of scenarios) {
+        const method = typeof scenario.method === 'function' ? scenario.method() : scenario.method;
+        const path = typeof scenario.path === 'function' ? scenario.path() : scenario.path;
+        const body = typeof scenario.body === 'function' ? scenario.body() : scenario.body;
+        const auth = scenario.auth || 'active';
+        setValue('method', method);
+        setValue('path', path);
+        setValue('body', typeof body === 'string' ? body : JSON.stringify(body ?? {}, null, 2));
+        setValue('authSource', auth);
+        setValue('expectedStatus', scenario.expected ?? 200);
+        const result = await sendRequest();
+        if (scenario.store && result?.payload) {
+          scenario.store(result.payload);
+        }
+      }
+      log(`Finished ${label}`);
+    }
+
+    async function runAuthSuite() {
+      await runScenarioSet([
+        { label: 'register', method: 'POST', path: '/api/v1/auth/register/', body: () => ({ email: `student-${Date.now()}@sesame.com.tn`, first_name: 'Test', last_name: 'User', password: 'Password123!' }), auth: 'none', expected: 201, store: (payload) => {
+          setValue('studentEmail', payload.email || getValue('studentEmail'));
+          if (payload.verification_code) {
+            setValue('verificationCode', payload.verification_code);
+          }
+        } },
+        { label: 'login', method: 'POST', path: '/api/v1/auth/login/', body: () => ({ email: getValue('studentEmail'), password: getValue('studentPassword') || 'Password123!' }), auth: 'none', expected: 200 },
+        { label: 'verify-code', method: 'POST', path: '/api/v1/auth/verify-code/', body: () => ({ code: getValue('verificationCode') }), auth: 'active', expected: 200 },
+        { label: 'me', method: 'GET', path: '/api/v1/auth/me/', body: () => ({}), auth: 'active', expected: 200 },
+        { label: 'refresh', method: 'POST', path: '/api/v1/auth/refresh/', body: () => ({ refresh: state.refreshToken || '' }), auth: 'none', expected: 200 },
+        { label: 'resend-code', method: 'POST', path: '/api/v1/auth/resend-code/', body: () => ({}), auth: 'active', expected: 200 },
+      ], 'auth suite');
+    }
+
+    async function runBeginnerAuthFlow() {
+      await createStudentAccount();
+      await verifyCode();
+      await loginStudent();
+      await getMe();
+    }
+
+    async function runCollabSuite() {
+      await runScenarioSet([
+        { label: 'clubs list', method: 'GET', path: '/api/v1/clubs/', body: () => ({}), auth: 'active', expected: 200 },
+        { label: 'clubs create', method: 'POST', path: '/api/v1/clubs/', body: () => ({ name: 'Explorer Club', description: 'Created by the test bench', is_active: true }), auth: 'active', expected: 201 },
+        { label: 'clubs join', method: 'POST', path: () => `/api/v1/clubs/${getValue('clubId')}/join/`, body: () => ({}), auth: 'active', expected: 200 },
+        { label: 'memberships list', method: 'GET', path: '/api/v1/memberships/', body: () => ({}), auth: 'active', expected: 200 },
+        { label: 'events list', method: 'GET', path: '/api/v1/events/', body: () => ({}), auth: 'active', expected: 200 },
+        { label: 'events create', method: 'POST', path: '/api/v1/events/', body: () => ({ title: 'Launch Event', description: 'Created by the test bench', club: getValue('clubId'), location: 'Auditorium', date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), capacity: 30, status: 'published' }), auth: 'active', expected: 201 },
+        { label: 'event register', method: 'POST', path: () => `/api/v1/events/${getValue('eventId')}/register/`, body: () => ({}), auth: 'active', expected: 201 },
+        { label: 'event unregister', method: 'DELETE', path: () => `/api/v1/events/${getValue('eventId')}/unregister/`, body: () => ({}), auth: 'active', expected: 200 },
+        { label: 'conversation create', method: 'POST', path: '/api/v1/conversations/', body: () => ({}), auth: 'active', expected: 201 },
+        { label: 'message send', method: 'POST', path: () => `/api/v1/conversations/${getValue('conversationId')}/messages/`, body: () => ({ body: 'Ping from the test bench' }), auth: 'active', expected: 201 },
+        { label: 'requests create', method: 'POST', path: '/api/v1/requests/', body: () => ({ request_type: 'CLUB CREATION', title: 'Need a makers club', description: 'This request was generated from the UI.', metadata: {} }), auth: 'active', expected: 201 },
+      ], 'collaboration suite');
+    }
+
+    async function runAdminSuite() {
+      await runScenarioSet([
+        { label: 'requests list', method: 'GET', path: '/api/v1/requests/', body: () => ({}), auth: 'admin', expected: 200 },
+        { label: 'requests update', method: 'PATCH', path: '/api/v1/requests/REQUEST_ID/update_status/', body: () => ({ status: 'TREATED' }), auth: 'admin', expected: 200 },
+        { label: 'audit logs', method: 'GET', path: '/api/v1/audit-logs/', body: () => ({}), auth: 'admin', expected: 200 },
+        { label: 'users list', method: 'GET', path: '/api/v1/users/', body: () => ({}), auth: 'admin', expected: 200 },
+        { label: 'registrations list', method: 'GET', path: '/api/v1/registrations/', body: () => ({}), auth: 'admin', expected: 200 },
+      ], 'admin suite');
+    }
+
+    async function runFullSuite() {
+      await runAuthSuite();
+      await runCollabSuite();
+      await runAdminSuite();
+      await runScenarioSet([
+        { label: 'clubs without token', method: 'GET', path: '/api/v1/clubs/', body: () => ({}), auth: 'none', expected: 401 },
+        { label: 'clubs with active token', method: 'GET', path: '/api/v1/clubs/', body: () => ({}), auth: 'active', expected: 403 },
+        { label: 'google error', method: 'GET', path: '/api/v1/auth/google/error/', body: () => ({}), auth: 'none', expected: 400 },
+      ], 'negative checks');
+    }
+
+    function loadTokens() {
+      return loadJson(storageKeys.tokens, []);
+    }
+
+    function saveTokens(list) {
+      localStorage.setItem(storageKeys.tokens, JSON.stringify(list));
+      renderTokenList();
+    }
+
+    function renderTokenList() {
+      const select = document.getElementById('tokenList');
+      const tokens = loadTokens();
+      select.innerHTML = tokens.map((token, index) => `<option value="${index}">${escapeHtml(token.name)} · ${escapeHtml(token.kind || 'access')}</option>`).join('');
+    }
+
+    function currentSelectedToken() {
+      const select = document.getElementById('tokenList');
+      const tokens = loadTokens();
+      const selected = tokens[Number(select.value)];
+      return selected || null;
+    }
+
+    function persistLoadedToken(kind, token) {
+      if (!token) return;
+      const tokens = loadTokens();
+      tokens.unshift({ name: `${kind}-${new Date().toISOString()}`, kind, token });
+      saveTokens(tokens.slice(0, 25));
+      renderStateChips();
+    }
+
+    document.getElementById('baseUrl').addEventListener('change', saveState);
+    ['studentEmail', 'studentPassword', 'adminEmail', 'adminPassword', 'activeToken', 'clubId', 'membershipId', 'eventId', 'registrationId', 'conversationId', 'messageId', 'requestId', 'userId', 'verificationCode', 'authSource', 'expectedStatus'].forEach((id) => {
+      const element = document.getElementById(id);
+      if (element) element.addEventListener('change', saveState);
+      if (element) element.addEventListener('input', () => {
+        if (id === 'activeToken' || id === 'studentEmail' || id === 'adminEmail' || id === 'studentPassword' || id === 'adminPassword' || id === 'verificationCode') {
+          saveState();
+        }
+      });
+    });
+
+    document.getElementById('sendBtn').addEventListener('click', () => sendRequest());
+    document.getElementById('clearLogBtn').addEventListener('click', () => {
+      document.getElementById('log').textContent = 'Ready.';
+    });
+    document.getElementById('createStudentBtn').addEventListener('click', createStudentAccount);
+    document.getElementById('loginStudentBtn').addEventListener('click', loginStudent);
+    document.getElementById('verifyCodeBtn').addEventListener('click', verifyCode);
+    document.getElementById('resendCodeBtn').addEventListener('click', resendCode);
+    document.getElementById('meBtn').addEventListener('click', getMe);
+    document.getElementById('refreshBtn').addEventListener('click', refreshToken);
+    document.getElementById('easyRegisterBtn').addEventListener('click', createStudentAccount);
+    document.getElementById('easyVerifyBtn').addEventListener('click', verifyCode);
+    document.getElementById('easyLoginBtn').addEventListener('click', loginStudent);
+    document.getElementById('easyMeBtn').addEventListener('click', getMe);
+    document.getElementById('runBeginnerAuthBtn').addEventListener('click', runBeginnerAuthFlow);
+    document.getElementById('runAuthSuiteBtn').addEventListener('click', runAuthSuite);
+    document.getElementById('runCollabSuiteBtn').addEventListener('click', runCollabSuite);
+    document.getElementById('runAdminSuiteBtn').addEventListener('click', runAdminSuite);
+    document.getElementById('runFullSuiteBtn').addEventListener('click', runFullSuite);
+    document.getElementById('openGoogle').addEventListener('click', () => {
+      const baseUrl = (getValue('baseUrl') || 'http://127.0.0.1:8000').replace(/\/+$/, '');
+      window.open(`${baseUrl}/api/v1/auth/google/login/google-oauth2/`, '_blank', 'noopener');
+    });
+
+    document.getElementById('openGoogleSuccess').addEventListener('click', () => {
+      const baseUrl = (getValue('baseUrl') || 'http://127.0.0.1:8000').replace(/\/+$/, '');
+      window.open(`${baseUrl}/api/v1/auth/google/success/`, '_blank', 'noopener');
+    });
+
+    document.getElementById('saveTokenBtn').addEventListener('click', () => {
+      const token = getValue('savedToken');
+      if (!token) {
+        log('No token to save', 'error');
+        return;
+      }
+      const list = loadTokens();
+      list.unshift({ name: getValue('savedName') || 'token', kind: 'access', token });
+      saveTokens(list.slice(0, 25));
+      setValue('savedName', '');
+      setValue('savedToken', '');
+      log('Token saved');
+    });
+
+    document.getElementById('loadTokenBtn').addEventListener('click', () => {
+      const selected = currentSelectedToken();
+      if (!selected) {
+        log('No saved token selected', 'error');
+        return;
+      }
+      setValue('activeToken', selected.token);
+      setValue('authSource', 'active');
+      saveState();
+      log(`Loaded saved token: ${selected.name}`);
+    });
+
+    document.getElementById('loadStudentTokenBtn').addEventListener('click', () => {
+      if (!state.studentToken) {
+        log('Student token is empty', 'error');
+        return;
+      }
+      setValue('activeToken', state.studentToken);
+      setValue('authSource', 'active');
+      saveState();
+      log('Student token loaded');
+    });
+
+    document.getElementById('loadAdminTokenBtn').addEventListener('click', () => {
+      if (!state.adminToken) {
+        log('Admin token is empty', 'error');
+        return;
+      }
+      setValue('activeToken', state.adminToken);
+      setValue('authSource', 'active');
+      saveState();
+      log('Admin token loaded');
+    });
+
+    function restoreState() {
+      setValue('studentEmail', state.studentEmail);
+      setValue('studentPassword', state.studentPassword || 'Password123!');
+      setValue('adminEmail', state.adminEmail);
+      setValue('adminPassword', state.adminPassword);
+      setValue('activeToken', state.activeToken);
+      setValue('clubId', state.clubId);
+      setValue('membershipId', state.membershipId);
+      setValue('eventId', state.eventId);
+      setValue('registrationId', state.registrationId);
+      setValue('conversationId', state.conversationId);
+      setValue('messageId', state.messageId);
+      setValue('requestId', state.requestId);
+      setValue('userId', state.userId);
+      setValue('verificationCode', state.verificationCode);
+      setValue('authSource', state.authSource || 'active');
+      setValue('expectedStatus', state.expectedStatus || 200);
+      renderStateChips();
+    }
+
+    function initialize() {
+      renderEndpointList();
+      renderTemplateButtons();
+      renderTokenList();
+      restoreState();
+      setTemplate(endpointTemplates[0]);
+      if (state.activeToken) {
+        document.getElementById('authSource').value = 'active';
+      }
+      log('Tester ready');
+    }
+
+    initialize();
+  </script>
+</body>
+</html>

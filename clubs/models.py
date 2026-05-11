@@ -43,6 +43,12 @@ class ClubMembership(models.Model):
         related_name='memberships',
     )
     joined_at = models.DateTimeField(auto_now_add=True)
+    internal_role = models.CharField(max_length=50, default='member')
+    status = models.CharField(
+        max_length=20,
+        choices=[('active', 'Active'), ('approved', 'Approved'), ('banned', 'Banned'), ('pending', 'Pending')],
+        default='active',
+    )
 
     class Meta:
         unique_together = ('user', 'club')

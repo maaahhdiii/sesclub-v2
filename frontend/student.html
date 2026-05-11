@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SESame — My Clubs</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fafaf8;
+    --surface: #ffffff;
+    --border: #ebebeb;
+    --text: #111110;
+    --muted: #888683;
+    --accent: #2563eb;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* Top nav */
+  .nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 36px; display: flex; align-items: center; height: 60px; gap: 16px; }
+  .nav-logo { font-family: 'Syne', sans-serif; font-size: 19px; font-weight: 800; letter-spacing: -0.5px; }
+  .nav-logo span { color: #2563eb; }
+  .nav-right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+  .nav-user { display: flex; align-items: center; gap: 9px; font-size: 13px; }
+  .u-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; background: #dbeafe; color: #1d4ed8; flex-shrink: 0; }
+  .u-name { font-weight: 500; }
+  .u-email { font-size: 11px; color: var(--muted); }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; font-family: 'DM Sans', sans-serif; }
+  .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-outline:hover { background: var(--bg); }
+  .btn-blue { background: var(--accent); color: white; }
+  .btn-blue:hover { background: #1d4ed8; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 7px; }
+
+  /* Hero */
+  .hero { padding: 48px 36px 0; max-width: 1100px; margin: 0 auto; }
+  .hero-greeting { font-size: 13px; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.3px; }
+  .hero-title { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 4px; }
+  .hero-sub { font-size: 15px; color: var(--muted); }
+
+  /* Filters */
+  .toolbar { display: flex; align-items: center; gap: 10px; padding: 24px 36px 0; max-width: 1100px; margin: 0 auto; }
+  .filter-group { display: flex; gap: 4px; background: var(--border); border-radius: 9px; padding: 3px; }
+  .filter-btn { padding: 6px 14px; border-radius: 7px; font-size: 13px; font-weight: 500; border: none; background: none; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .filter-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .toolbar-right { margin-left: auto; }
+  .search-box { position: relative; }
+  .search-box input { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 8px 12px 8px 34px; border-radius: 8px; font-size: 13px; font-family: 'DM Sans', sans-serif; outline: none; width: 220px; }
+  .search-box input:focus { border-color: var(--accent); }
+  .search-box input::placeholder { color: var(--muted); }
+  .search-box svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--muted); width: 15px; height: 15px; }
+
+  /* Club grid */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; padding: 20px 36px 40px; max-width: 1100px; margin: 0 auto; }
+
+  .club-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; cursor: pointer; transition: all 0.2s; position: relative; }
+  .club-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); border-color: transparent; }
+  .club-card:hover .enter-btn { opacity: 1; }
+  .club-card-banner { height: 80px; display: flex; align-items: center; justify-content: center; font-size: 36px; position: relative; }
+  .club-card-body { padding: 16px 18px 18px; }
+  .club-role-badge { position: absolute; top: 10px; right: 10px; padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  .badge-president { background: rgba(91,79,207,0.15); color: #5b4fcf; }
+  .badge-vice_president { background: rgba(14,165,233,0.12); color: #0369a1; }
+  .badge-officer { background: rgba(22,163,74,0.12); color: #16a34a; }
+  .badge-member { background: #f0f0f0; color: #666; }
+  .club-name { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+  .club-category { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .club-desc { font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .club-footer { display: flex; align-items: center; justify-content: space-between; }
+  .club-members-info { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .member-avatars { display: flex; }
+  .member-avatar-sm { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--surface); font-size: 9px; font-weight: 600; display: flex; align-items: center; justify-content: center; margin-left: -6px; }
+  .member-avatar-sm:first-child { margin-left: 0; }
+  .enter-btn { background: var(--accent); color: white; border: none; padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; gap: 5px; opacity: 0; transition: opacity 0.2s; }
+
+  /* Request modal */
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; backdrop-filter: blur(4px); }
+  .modal-bg.open { opacity: 1; pointer-events: all; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 32px; width: 440px; max-width: 90vw; transform: scale(0.95); transition: transform 0.2s; box-shadow: 0 24px 60px rgba(0,0,0,0.15); }
+  .modal-bg.open .modal { transform: scale(1); }
+  .modal-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+  .modal-field { margin-bottom: 16px; }
+  .modal-label { font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 6px; display: block; letter-spacing: 0.3px; text-transform: uppercase; }
+  .modal-input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 11px 14px; border-radius: 10px; font-size: 14px; font-family: 'DM Sans', sans-serif; outline: none; }
+  .modal-input:focus { border-color: var(--accent); background: var(--surface); }
+  .modal-input::placeholder { color: var(--muted); }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+  /* Club detail view */
+  .club-detail { display: none; padding: 28px 36px; max-width: 1100px; margin: 0 auto; }
+  .club-detail.visible { display: block; }
+  .back-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; margin-bottom: 24px; border: none; background: none; font-family: 'DM Sans', sans-serif; padding: 0; }
+  .back-btn:hover { color: var(--text); }
+  .detail-banner { border-radius: 20px; padding: 32px; margin-bottom: 24px; display: flex; align-items: center; gap: 24px; }
+  .detail-emoji { font-size: 56px; }
+  .detail-title { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; letter-spacing: -0.5px; color: white; }
+  .detail-meta { font-size: 14px; opacity: 0.8; color: white; margin-top: 4px; }
+  .detail-desc { font-size: 14px; opacity: 0.75; color: white; margin-top: 8px; line-height: 1.6; }
+
+  .detail-members { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+  .detail-members-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+  .detail-member-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+  .detail-member-row:last-child { border-bottom: none; }
+
+  /* Empty state */
+  .empty-state { text-align: center; padding: 80px 20px; }
+  .empty-emoji { font-size: 48px; margin-bottom: 16px; }
+  .empty-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  .empty-sub { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(60px); background: var(--text); color: white; border-radius: 10px; padding: 11px 20px; font-size: 13px; z-index: 200; opacity: 0; transition: all 0.3s; white-space: nowrap; }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+  /* Color palettes for clubs */
+  .palette-0 { background: linear-gradient(135deg, #667eea, #764ba2); }
+  .palette-1 { background: linear-gradient(135deg, #11998e, #38ef7d); }
+  .palette-2 { background: linear-gradient(135deg, #f093fb, #f5576c); }
+  .palette-3 { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+  .palette-4 { background: linear-gradient(135deg, #fa709a, #fee140); }
+  .palette-5 { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
+  .palette-6 { background: linear-gradient(135deg, #fccb90, #d57eeb); }
+  .palette-7 { background: linear-gradient(135deg, #a1c4fd, #c2e9fb); }
+
+  .hidden { display: none !important; }
+  .auth-shell { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .auth-card { width: min(460px, 100%); background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; box-shadow: 0 18px 40px rgba(0,0,0,0.08); }
+  .auth-title { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .auth-sub { color: var(--muted); font-size: 14px; margin-bottom: 18px; line-height: 1.5; }
+  .btn-google { width: 100%; justify-content: center; background: #ffffff; border: 1px solid #d9d9d9; color: #1f2937; padding: 10px 14px; font-weight: 600; }
+  .btn-google:hover { background: #f9fafb; }
+</style>
+</head>
+<body>
+
+<div id="auth-shell" class="auth-shell hidden">
+  <div class="auth-card">
+    <div class="auth-title">Student Login</div>
+    <div class="auth-sub">Use your student Google account to access your clubs and events.</div>
+    <button id="google-login-btn" class="btn btn-google" type="button">
+      Continue with Google
+    </button>
+  </div>
+</div>
+
+<div id="app-shell">
+
+<nav class="nav">
+  <div class="nav-logo">SES<span>ame</span></div>
+  <div class="nav-right">
+    <button class="btn btn-outline btn-sm" onclick="openRequestModal()">
+      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Request a Club
+    </button>
+    <button class="btn btn-outline btn-sm" onclick="logoutStudent()">
+      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Logout
+    </button>
+    <div class="nav-user">
+      <div class="u-avatar" id="nav-avatar">?</div>
+      <div>
+        <div class="u-name" id="nav-name">Student</div>
+        <div class="u-email" id="nav-email">Loading...</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Clubs list view -->
+<div id="clubs-view">
+  <div class="hero">
+    <div class="hero-greeting">Welcome back 👋</div>
+    <div class="hero-title" id="hero-title">Your Clubs</div>
+    <div class="hero-sub">Select a club to enter its space</div>
+  </div>
+
+  <div class="toolbar">
+    <div class="filter-group">
+      <button class="filter-btn active" onclick="setFilter('all',this)">All clubs</button>
+      <button class="filter-btn" onclick="setFilter('mine',this)">My clubs</button>
+    </div>
+    <div class="toolbar-right">
+      <div class="search-box">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Search clubs..." id="club-search" oninput="renderClubs()" />
+      </div>
+    </div>
+  </div>
+
+  <div class="grid" id="clubs-grid">
+    <div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--muted)">Loading clubs...</div>
+  </div>
+</div>
+
+<!-- Club detail view -->
+<div class="club-detail" id="club-detail">
+  <button class="back-btn" onclick="goBack()">
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Back to my clubs
+  </button>
+  <div id="detail-content"></div>
+</div>
+
+<!-- Request modal -->
+<div class="modal-bg" id="request-modal">
+  <div class="modal">
+    <div class="modal-title">Request a New Club</div>
+    <div class="modal-sub">Submit your idea — the admin will review and approve it.</div>
+    <div class="modal-field">
+      <label class="modal-label">Club Name</label>
+      <input class="modal-input" id="req-name" type="text" placeholder="e.g. Photography Club" />
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">Category</label>
+      <input class="modal-input" id="req-category" type="text" placeholder="e.g. Arts, Sports, Tech..." />
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">Why this club?</label>
+      <textarea class="modal-input" id="req-desc" rows="3" placeholder="Describe the club and why students would benefit..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeRequestModal()">Cancel</button>
+      <button class="btn btn-blue" onclick="submitRequest()">Submit Request</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8000/api/v1';
+const STUDENT_KEYS = {
+  access: 'student_access',
+  refresh: 'student_refresh',
+  user: 'student_user',
+};
+let token = localStorage.getItem(STUDENT_KEYS.access);
+let currentUser = JSON.parse(localStorage.getItem(STUDENT_KEYS.user)||'null');
+let allClubs = [];
+let myMemberships = [];
+let filterMode = 'all';
+
+const emojis = ['🚀','🎨','⚽','🎵','💻','🔬','📚','🎭','🏆','🌍','🎮','📷','🤖','⚗️','🎪'];
+const roleLabels = { president:'President', vice_president:'Vice President', secretary:'Secretary', officer:'Officer', member:'Member' };
+const roleBadgeClass = { president:'badge-president', vice_president:'badge-vice_president', officer:'badge-officer', member:'badge-member' };
+const avColors = ['background:#dbeafe;color:#1d4ed8','background:#dcfce7;color:#16a34a','background:#fef3c7;color:#d97706','background:#fce7f3;color:#be185d','background:#ede9fe;color:#7c3aed'];
+
+function initials(name) { return (name||'?').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase(); }
+function colorFor(str) { let h=0; for(let c of (str||'')) h=(h*31+c.charCodeAt(0))&0xffff; return avColors[h%avColors.length]; }
+function emojiFor(str) { let h=0; for(let c of (str||'')) h=(h*31+c.charCodeAt(0))&0xffff; return emojis[h%emojis.length]; }
+function paletteFor(str) { let h=0; for(let c of (str||'')) h=(h*31+c.charCodeAt(0))&0xffff; return h%8; }
+
+function showToast(msg) {
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+function clearStudentAuth() {
+  localStorage.removeItem(STUDENT_KEYS.access);
+  localStorage.removeItem(STUDENT_KEYS.refresh);
+  localStorage.removeItem(STUDENT_KEYS.user);
+  token = null;
+  currentUser = null;
+}
+
+function logoutStudent() {
+  clearStudentAuth();
+  showAuthOnly();
+}
+
+function consumeAuthFromHash() {
+  const hash = window.location.hash ? window.location.hash.slice(1) : '';
+  if (!hash) return;
+  const params = new URLSearchParams(hash);
+  const access = params.get('access');
+  const refresh = params.get('refresh');
+  const userRaw = params.get('user');
+
+  if (access) {
+    localStorage.setItem(STUDENT_KEYS.access, access);
+    token = access;
+  }
+  if (refresh) localStorage.setItem(STUDENT_KEYS.refresh, refresh);
+  if (userRaw) {
+    try {
+      currentUser = JSON.parse(userRaw);
+      localStorage.setItem(STUDENT_KEYS.user, JSON.stringify(currentUser));
+    } catch (e) {
+      // Ignore malformed user payload and fall back to /auth/me/
+    }
+  }
+
+  if (access || refresh || userRaw) {
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+}
+
+function showAuthOnly() {
+  document.getElementById('auth-shell').classList.remove('hidden');
+  document.getElementById('app-shell').classList.add('hidden');
+}
+
+function showAppOnly() {
+  document.getElementById('auth-shell').classList.add('hidden');
+  document.getElementById('app-shell').classList.remove('hidden');
+}
+
+async function apiFetch(path, opts={}) {
+  const headers = {'Content-Type':'application/json', ...(token?{Authorization:`Bearer ${token}`}:{})};
+  try {
+    const r = await fetch(API+path, {...opts, headers});
+    if (!r.ok) throw new Error(r.status);
+    const ct = r.headers.get('content-type')||'';
+    return ct.includes('json') ? r.json() : {};
+  } catch(e) { return null; }
+}
+
+async function init() {
+  consumeAuthFromHash();
+
+  if (!token) {
+    showAuthOnly();
+    return;
+  }
+
+  const me = await apiFetch('/auth/me/');
+  if (me) {
+    currentUser = me;
+    localStorage.setItem(STUDENT_KEYS.user, JSON.stringify(me));
+  }
+
+  if (!currentUser) {
+    clearStudentAuth();
+    showAuthOnly();
+    return;
+  }
+
+  if ((currentUser.role || '').toLowerCase() === 'administrator') {
+    clearStudentAuth();
+    showAuthOnly();
+    showToast('Please sign in with a student or club account.');
+    return;
+  }
+
+  showAppOnly();
+
+  const name = `${currentUser.first_name} ${currentUser.last_name}`;
+  document.getElementById('nav-name').textContent = name;
+  document.getElementById('nav-email').textContent = currentUser.email;
+  document.getElementById('nav-avatar').textContent = initials(name);
+  document.getElementById('hero-title').textContent = `Hello, ${currentUser.first_name} 👋`;
+
+  await loadClubs();
+}
+
+async function loadClubs() {
+  const data = await apiFetch('/clubs/');
+  allClubs = data?.results || (Array.isArray(data)?data:[]);
+
+  if (!allClubs.length) {
+    // Demo clubs
+    allClubs = [
+      { id:'c1', name:'Robotics Club', category:'Technology', description:'Build and program robots, compete nationally, and explore automation.', memberships:[
+        {user:'s1',internal_role:'member',user_detail:{id:'s1',first_name:'Sara',last_name:'Trabelsi',email:'sara.trabelsi@sesame.com.tn'}},
+        {user:'p1',internal_role:'president',user_detail:{id:'p1',first_name:'Yassine',last_name:'Dridi',email:'yassine.dridi@sesame.com.tn'}},
+        {user:'s2',internal_role:'vice_president',user_detail:{id:'s2',first_name:'Amine',last_name:'Ben Ali',email:'amine.benali@sesame.com.tn'}},
+      ]},
+      { id:'c2', name:'Photography Club', category:'Arts', description:'Explore visual storytelling, learn studio techniques, and exhibit your work.', memberships:[
+        {user:'s1',internal_role:'officer',user_detail:{id:'s1',first_name:'Sara',last_name:'Trabelsi',email:'sara.trabelsi@sesame.com.tn'}},
+        {user:'p2',internal_role:'president',user_detail:{id:'p2',first_name:'Nour',last_name:'Chaabane',email:'nour.chaabane@sesame.com.tn'}},
+      ]},
+      { id:'c3', name:'Chess Club', category:'Strategy', description:'Weekly matches, tournaments, and strategy workshops for all skill levels.', memberships:[
+        {user:'x1',internal_role:'president',user_detail:{id:'x1',first_name:'Ahmed',last_name:'Saidi',email:'ahmed.saidi@sesame.com.tn'}},
+        {user:'x2',internal_role:'member',user_detail:{id:'x2',first_name:'Lina',last_name:'Hamdi',email:'lina.hamdi@sesame.com.tn'}},
+      ]},
+      { id:'c4', name:'Debate Society', category:'Communication', description:'Sharpen critical thinking and public speaking through structured debates.', memberships:[
+        {user:'s1',internal_role:'member',user_detail:{id:'s1',first_name:'Sara',last_name:'Trabelsi',email:'sara.trabelsi@sesame.com.tn'}},
+      ]},
+    ];
+  }
+
+  // Figure out current user's memberships
+  myMemberships = allClubs.reduce((acc,c)=>{
+    const m = (c.memberships||[]).find(m=>m.user===currentUser?.id||m.user_detail?.id===currentUser?.id);
+    if(m) acc.push({clubId:c.id,role:m.internal_role});
+    return acc;
+  }, []);
+
+  renderClubs();
+}
+
+function setFilter(f, btn) {
+  filterMode = f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderClubs();
+}
+
+function renderClubs() {
+  const q = (document.getElementById('club-search').value||'').toLowerCase();
+  let clubs = allClubs;
+  if (filterMode==='mine') {
+    const myIds = new Set(myMemberships.map(m=>m.clubId));
+    clubs = clubs.filter(c=>myIds.has(c.id));
+  }
+  if (q) clubs = clubs.filter(c=>`${c.name} ${c.category} ${c.description}`.toLowerCase().includes(q));
+
+  const grid = document.getElementById('clubs-grid');
+
+  if (!clubs.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-emoji">🔍</div>
+      <div class="empty-title">${filterMode==='mine'?'You haven\'t joined any clubs yet':'No clubs found'}</div>
+      <div class="empty-sub">${filterMode==='mine'?'Browse all clubs or request to create your own.':'Try a different search term.'}</div>
+      ${filterMode==='mine'?`<button class="btn btn-blue" onclick="openRequestModal()">Request a Club</button>`:''}
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = clubs.map(c => {
+    const myM = myMemberships.find(m=>m.clubId===c.id);
+    const emoji = emojiFor(c.name);
+    const palette = paletteFor(c.name);
+    const memberCount = (c.memberships||[]).length;
+    const previewMembers = (c.memberships||[]).slice(0,3);
+
+    return `<div class="club-card" onclick="enterClub('${c.id}')">
+      <div class="club-card-banner palette-${palette}">
+        <span>${emoji}</span>
+        ${myM ? `<span class="club-role-badge ${roleBadgeClass[myM.role]||'badge-member'}">${roleLabels[myM.role]||myM.role}</span>` : ''}
+      </div>
+      <div class="club-card-body">
+        <div class="club-name">${c.name}</div>
+        <div class="club-category">${c.category||'General'}</div>
+        <div class="club-desc">${c.description||'No description.'}</div>
+        <div class="club-footer">
+          <div class="club-members-info">
+            <div class="member-avatars">
+              ${previewMembers.map(m=>{
+                const u=m.user_detail||{};
+                const n=`${u.first_name||''} ${u.last_name||''}`.trim();
+                const style=colorFor(u.email||n);
+                return `<div class="member-avatar-sm" style="${style}">${initials(n)}</div>`;
+              }).join('')}
+            </div>
+            <span>${memberCount} member${memberCount!==1?'s':''}</span>
+          </div>
+          <button class="enter-btn" onclick="event.stopPropagation();enterClub('${c.id}')">
+            Enter
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function enterClub(clubId) {
+  const club = allClubs.find(c=>c.id===clubId);
+  if (!club) return;
+  const myM = myMemberships.find(m=>m.clubId===clubId);
+  const emoji = emojiFor(club.name);
+  const palette = paletteFor(club.name);
+  const members = club.memberships || [];
+
+  const content = `
+    <div class="detail-banner palette-${palette}">
+      <div class="detail-emoji">${emoji}</div>
+      <div>
+        <div class="detail-title">${club.name}</div>
+        <div class="detail-meta">${club.category||'General'} · ${members.length} members${myM?` · You are ${roleLabels[myM.role]||myM.role}`:''}</div>
+        <div class="detail-desc">${club.description||'No description provided.'}</div>
+      </div>
+    </div>
+    <div class="detail-members">
+      <div class="detail-members-title">Members (${members.length})</div>
+      ${members.map(m=>{
+        const u=m.user_detail||{};
+        const n=`${u.first_name||''} ${u.last_name||''}`.trim()||'Unknown';
+        const style=colorFor(u.email||n);
+        const badge=roleBadgeClass[m.internal_role]||'badge-member';
+        const label=roleLabels[m.internal_role]||m.internal_role;
+        return `<div class="detail-member-row">
+          <div class="u-avatar" style="${style};width:38px;height:38px;font-size:13px">${initials(n)}</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:500">${n}</div>
+            <div style="font-size:12px;color:var(--muted)">${u.email||''}</div>
+          </div>
+          <span class="club-role-badge ${badge}" style="position:static">${label}</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  document.getElementById('detail-content').innerHTML = content;
+  document.getElementById('clubs-view').style.display = 'none';
+  document.getElementById('club-detail').classList.add('visible');
+}
+
+function goBack() {
+  document.getElementById('clubs-view').style.display = 'block';
+  document.getElementById('club-detail').classList.remove('visible');
+}
+
+// Request modal
+function openRequestModal() { document.getElementById('request-modal').classList.add('open'); }
+function closeRequestModal() { document.getElementById('request-modal').classList.remove('open'); }
+document.getElementById('request-modal').addEventListener('click', e=>{ if(e.target===document.getElementById('request-modal')) closeRequestModal(); });
+
+async function submitRequest() {
+  const name = document.getElementById('req-name').value.trim();
+  const category = document.getElementById('req-category').value.trim();
+  const desc = document.getElementById('req-desc').value.trim();
+  if (!name) { showToast('Please enter a club name'); return; }
+
+  const response = await fetch(`${API}/requests/`, {
+    method:'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({
+      title: name,
+      description: desc,
+      request_type: 'CLUB_CREATION',
+      metadata: { club_name:name, club_category:category, club_description:desc }
+    })
+  });
+
+  let payload = {};
+  try {
+    payload = await response.json();
+  } catch (_) {
+    payload = {};
+  }
+
+  if (!response.ok) {
+    const detail = payload?.detail || payload?.request_type?.[0] || payload?.error || 'Failed to submit request.';
+    showToast(detail);
+    return;
+  }
+
+  closeRequestModal();
+  document.getElementById('req-name').value='';
+  document.getElementById('req-category').value='';
+  document.getElementById('req-desc').value='';
+  showToast('Club request submitted! The admin will review it soon.');
+}
+
+init();
+
+document.getElementById('google-login-btn')?.addEventListener('click', () => {
+  window.location.href = `${API}/auth/google/login/student/`;
+});
+</script>
+</body>
+</html>

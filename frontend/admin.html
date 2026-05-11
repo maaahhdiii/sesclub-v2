@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SESame Admin — Club Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f11;
+    --surface: #18181c;
+    --surface2: #222228;
+    --border: #2e2e38;
+    --accent: #6c63ff;
+    --accent2: #a78bfa;
+    --text: #f0eff8;
+    --muted: #8b8a9b;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* Layout */
+  .shell { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 0; display: flex; flex-direction: column; }
+  .sidebar-logo { padding: 24px 20px; border-bottom: 1px solid var(--border); }
+  .sidebar-logo .wordmark { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--accent2); letter-spacing: -0.5px; }
+  .sidebar-logo .sub { font-size: 11px; color: var(--muted); margin-top: 2px; letter-spacing: 1px; text-transform: uppercase; }
+  .nav { padding: 16px 12px; flex: 1; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; font-size: 14px; color: var(--muted); cursor: pointer; transition: all 0.15s; margin-bottom: 2px; border: none; background: none; width: 100%; text-align: left; }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(108,99,255,0.15); color: var(--accent2); }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .nav-section { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); padding: 16px 12px 6px; }
+  .sidebar-footer { padding: 16px; border-top: 1px solid var(--border); }
+  .admin-badge { display: flex; align-items: center; gap: 10px; }
+  .admin-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #6c63ff, #a78bfa); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: white; flex-shrink: 0; }
+  .admin-name { font-size: 13px; font-weight: 500; }
+  .admin-role { font-size: 11px; color: var(--muted); }
+
+  /* Main */
+  .main { display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { padding: 16px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--surface); }
+  .topbar-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 600; }
+  .topbar-actions { display: flex; gap: 10px; align-items: center; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; font-family: 'DM Sans', sans-serif; }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #5a52e0; }
+  .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--border); }
+  .btn-danger { background: rgba(239,68,68,0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
+  .btn-success { background: rgba(34,197,94,0.15); color: var(--success); border: 1px solid rgba(34,197,94,0.3); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  /* Content area */
+  .content { padding: 28px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 24px; }
+
+  /* Stats */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+  .stat-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .stat-value { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 700; }
+  .stat-value.accent { color: var(--accent2); }
+  .stat-value.success { color: var(--success); }
+  .stat-value.warning { color: var(--warning); }
+
+  /* Two-panel layout */
+  .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; display: flex; flex-direction: column; }
+  .panel-header { padding: 18px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .panel-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 600; }
+  .panel-body { padding: 16px; flex: 1; overflow-y: auto; max-height: 480px; display: flex; flex-direction: column; gap: 8px; }
+
+  /* Search */
+  .search-wrap { position: relative; margin-bottom: 8px; }
+  .search-wrap input { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 9px 12px 9px 36px; border-radius: 8px; font-size: 13px; font-family: 'DM Sans', sans-serif; outline: none; }
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); width: 16px; height: 16px; }
+
+  /* Student cards */
+  .student-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; cursor: grab; transition: all 0.15s; user-select: none; }
+  .student-card:hover { border-color: var(--accent); transform: translateX(2px); }
+  .student-card.dragging { opacity: 0.5; cursor: grabbing; }
+  .student-card.drag-over { border-color: var(--accent2); background: rgba(108,99,255,0.1); }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+  .avatar-purple { background: rgba(108,99,255,0.2); color: var(--accent2); }
+  .avatar-teal { background: rgba(20,184,166,0.2); color: #2dd4bf; }
+  .avatar-amber { background: rgba(245,158,11,0.2); color: #fbbf24; }
+  .avatar-rose { background: rgba(244,63,94,0.2); color: #fb7185; }
+  .avatar-green { background: rgba(34,197,94,0.2); color: #4ade80; }
+  .student-info { flex: 1; min-width: 0; }
+  .student-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .student-email { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .drag-hint { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+
+  /* Club cards */
+  .club-card { background: var(--surface2); border: 2px dashed var(--border); border-radius: 12px; padding: 14px; transition: all 0.2s; }
+  .club-card.drag-target { border-color: var(--accent); background: rgba(108,99,255,0.08); }
+  .club-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .club-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .club-name { font-size: 14px; font-weight: 600; font-family: 'Syne', sans-serif; }
+  .club-drop-zone { background: rgba(108,99,255,0.06); border: 1.5px dashed rgba(108,99,255,0.3); border-radius: 8px; padding: 10px; min-height: 48px; font-size: 12px; color: var(--muted); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 4px; }
+  .club-drop-zone.has-president { background: rgba(34,197,94,0.06); border-color: rgba(34,197,94,0.3); align-items: flex-start; justify-content: flex-start; padding: 10px; }
+  .president-chip { display: flex; align-items: center; gap: 8px; }
+  .president-chip .avatar { width: 28px; height: 28px; font-size: 11px; }
+  .president-name { font-size: 12px; font-weight: 500; color: var(--success); }
+  .president-label { font-size: 10px; color: var(--muted); letter-spacing: 0.5px; text-transform: uppercase; }
+  .remove-btn { margin-left: auto; background: none; border: none; color: var(--muted); cursor: pointer; padding: 2px; border-radius: 4px; display: flex; }
+  .remove-btn:hover { color: var(--danger); }
+
+  /* Club creation */
+  .create-club-form { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+  .form-row { display: flex; gap: 8px; }
+  .form-input { flex: 1; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 8px; font-size: 13px; font-family: 'DM Sans', sans-serif; outline: none; }
+  .form-input:focus { border-color: var(--accent); }
+  .form-input::placeholder { color: var(--muted); }
+
+  /* Badge */
+  .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .badge-pending { background: rgba(245,158,11,0.15); color: var(--warning); }
+  .badge-active { background: rgba(34,197,94,0.15); color: var(--success); }
+
+  /* Requests section */
+  .requests-list { display: flex; flex-direction: column; gap: 8px; }
+  .request-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+  .request-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+  .request-title { font-size: 14px; font-weight: 500; }
+  .request-by { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .request-desc { font-size: 12px; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+  .request-actions { display: flex; gap: 8px; }
+
+  /* Drop instructions */
+  .drop-instructions { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); padding: 8px 12px; background: rgba(108,99,255,0.08); border-radius: 8px; border: 1px solid rgba(108,99,255,0.2); margin-bottom: 8px; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; font-size: 13px; z-index: 1000; transform: translateY(80px); opacity: 0; transition: all 0.3s; max-width: 280px; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast-success { border-left: 3px solid var(--success); }
+  .toast-info { border-left: 3px solid var(--accent); }
+
+  /* Modal */
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .modal-bg.open { opacity: 1; pointer-events: all; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: 420px; max-width: 90vw; transform: scale(0.95); transition: transform 0.2s; }
+  .modal-bg.open .modal { transform: scale(1); }
+  .modal-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+  .modal-field { margin-bottom: 14px; }
+  .modal-label { font-size: 12px; color: var(--muted); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; display: block; }
+  .modal-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 8px; font-size: 14px; font-family: 'DM Sans', sans-serif; outline: none; }
+  .modal-input:focus { border-color: var(--accent); }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+  .hidden { display: none !important; }
+  .auth-shell { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .auth-card { width: min(460px, 100%); background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; box-shadow: 0 16px 40px rgba(0,0,0,0.25); }
+  .auth-title { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+  .auth-sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+  .auth-field { margin-bottom: 12px; }
+  .auth-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 10px 12px; border-radius: 8px; font-size: 14px; font-family: 'DM Sans', sans-serif; outline: none; }
+  .auth-input:focus { border-color: var(--accent); }
+  .auth-error { color: #fca5a5; font-size: 12px; min-height: 18px; margin-top: 8px; }
+
+  .role-settings-grid { display: grid; grid-template-columns: 320px 1fr; gap: 16px; }
+  .feature-palette { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+  .feature-list { display: grid; gap: 8px; margin-top: 10px; }
+  .feature-chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; cursor: grab; }
+  .roles-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .role-col { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+  .role-drop { min-height: 220px; border: 1.5px dashed var(--border); border-radius: 10px; padding: 10px; display: grid; gap: 8px; align-content: start; }
+  .role-drop.drag-target { border-color: var(--accent); background: rgba(108,99,255,0.08); }
+  .role-item { background: rgba(108,99,255,0.12); border: 1px solid rgba(108,99,255,0.35); border-radius: 8px; padding: 8px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
+  .role-remove { border: none; background: transparent; color: var(--muted); cursor: pointer; }
+  .role-remove:hover { color: var(--danger); }
+</style>
+</head>
+<body>
+
+<div id="auth-shell" class="auth-shell">
+  <div class="auth-card">
+    <div class="auth-title">Admin Login</div>
+    <div class="auth-sub">Only administrator accounts can access this page.</div>
+    <form id="admin-login-form">
+      <div class="auth-field">
+        <label class="modal-label" for="admin-email">Email</label>
+        <input class="auth-input" id="admin-email" type="email" placeholder="admin@sesame.com.tn" required />
+      </div>
+      <div class="auth-field">
+        <label class="modal-label" for="admin-password">Password</label>
+        <input class="auth-input" id="admin-password" type="password" placeholder="••••••••" required />
+      </div>
+      <button id="admin-login-btn" class="btn btn-primary" type="submit" style="width:100%;justify-content:center">Sign in as Admin</button>
+    </form>
+    <div id="auth-error" class="auth-error"></div>
+  </div>
+</div>
+
+<div id="app-shell" class="shell hidden">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="wordmark">SESame</div>
+      <div class="sub">Admin Portal</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">Management</div>
+      <button class="nav-item active" data-section="clubs" onclick="showSection('clubs')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Clubs & Students
+      </button>
+      <button class="nav-item" data-section="requests" onclick="showSection('requests')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Club Requests <span id="req-badge" style="margin-left:auto;background:rgba(245,158,11,0.2);color:#fbbf24;border-radius:20px;padding:1px 7px;font-size:11px;">3</span>
+      </button>
+      <div class="nav-section">System</div>
+      <button class="nav-item" data-section="role-settings" onclick="showSection('role-settings')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 1 0 4.93 19.07 10 10 0 0 0 19.07 4.93z"/></svg>
+        Role Settings
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-badge">
+        <div class="admin-avatar">AD</div>
+        <div>
+          <div class="admin-name">Admin</div>
+          <div class="admin-role">Super Administrator</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">Clubs & Students</div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost" id="refresh-btn">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Refresh
+        </button>
+        <button class="btn btn-primary" onclick="openCreateModal()">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New Club
+        </button>
+      </div>
+    </div>
+
+    <!-- Clubs & Students section -->
+    <div class="content" id="section-clubs">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Total Students</div>
+          <div class="stat-value accent" id="stat-students">248</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active Clubs</div>
+          <div class="stat-value success" id="stat-clubs">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Pending Requests</div>
+          <div class="stat-value warning">3</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Club Members</div>
+          <div class="stat-value" id="stat-members">0</div>
+        </div>
+      </div>
+
+      <div class="drop-instructions">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Drag a student from the left panel onto a club's drop zone to assign them as president
+      </div>
+
+      <div class="panels">
+        <!-- Students panel -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">All Students</div>
+            <span style="font-size:12px;color:var(--muted)" id="student-count">248 students</span>
+          </div>
+          <div class="panel-body">
+            <div class="search-wrap">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" placeholder="Search students..." id="student-search" oninput="filterStudents()" />
+            </div>
+            <div id="students-list"></div>
+          </div>
+        </div>
+
+        <!-- Clubs panel -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Clubs</div>
+            <span style="font-size:12px;color:var(--muted)" id="clubs-count">0 clubs</span>
+          </div>
+          <div class="panel-body" id="clubs-list">
+            <div style="text-align:center;padding:40px 20px;color:var(--muted)">
+              <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1" style="margin:0 auto 12px;display:block;opacity:0.4"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              No clubs yet. Click "New Club" to create one.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Requests section -->
+    <div class="content" id="section-requests" style="display:none">
+      <div style="font-size:14px;color:var(--muted);margin-bottom:4px">Review and approve student club creation requests.</div>
+      <div class="requests-list" id="requests-list"></div>
+    </div>
+
+    <div class="content" id="section-role-settings" style="display:none">
+      <div style="font-size:14px;color:var(--muted);margin-bottom:4px">Drag features into each role to control what members can see in the club portal.</div>
+      <div class="role-settings-grid">
+        <div class="feature-palette">
+          <div class="panel-title">Features</div>
+          <div class="feature-list" id="feature-list"></div>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="btn btn-primary btn-sm" onclick="saveRoleSettings()">Save</button>
+            <button class="btn btn-ghost btn-sm" onclick="resetRoleSettings()">Reset</button>
+          </div>
+        </div>
+        <div class="roles-grid">
+          <div class="role-col">
+            <div class="panel-title" style="margin-bottom:8px">President</div>
+            <div id="role-president" class="role-drop" ondragover="onRoleDragOver(event,'president')" ondragleave="onRoleDragLeave(event,'president')" ondrop="onRoleDrop(event,'president')"></div>
+          </div>
+          <div class="role-col">
+            <div class="panel-title" style="margin-bottom:8px">Vice President</div>
+            <div id="role-vice_president" class="role-drop" ondragover="onRoleDragOver(event,'vice_president')" ondragleave="onRoleDragLeave(event,'vice_president')" ondrop="onRoleDrop(event,'vice_president')"></div>
+          </div>
+          <div class="role-col">
+            <div class="panel-title" style="margin-bottom:8px">Member</div>
+            <div id="role-member" class="role-drop" ondragover="onRoleDragOver(event,'member')" ondragleave="onRoleDragLeave(event,'member')" ondrop="onRoleDrop(event,'member')"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Club Modal -->
+<div class="modal-bg" id="create-modal">
+  <div class="modal">
+    <div class="modal-title">Create New Club</div>
+    <div class="modal-field">
+      <label class="modal-label">Club Name</label>
+      <input class="modal-input" id="club-name-input" type="text" placeholder="e.g. Robotics Club" />
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">Category</label>
+      <input class="modal-input" id="club-category-input" type="text" placeholder="e.g. Technology, Sports, Arts..." />
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">Description</label>
+      <textarea class="modal-input" id="club-desc-input" rows="3" placeholder="Brief description of the club..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeCreateModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="createClub()">Create Club</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://127.0.0.1:8000/api/v1';
+let token = sessionStorage.getItem('admin_token');
+let currentUser = JSON.parse(sessionStorage.getItem('admin_user') || 'null');
+let students = [];
+let clubs = [];
+let draggedStudent = null;
+let draggedFeature = null;
+
+const ROLE_SETTINGS_KEY = 'club_role_settings_v1';
+const FEATURES = {
+  dashboard: 'Tableau de bord',
+  club: 'Mon Club',
+  membres: 'Membres',
+  events: 'Evenements',
+  demandes: 'Demandes',
+  avis: 'Avis',
+};
+
+const colors = ['avatar-purple','avatar-teal','avatar-amber','avatar-rose','avatar-green'];
+const clubEmojis = ['🚀','🎨','⚽','🎵','💻','🔬','📚','🎭','🏆','🌍'];
+
+function initials(name) {
+  return (name||'?').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
+}
+function colorFor(str) {
+  let h=0; for(let c of (str||'')) h=(h*31+c.charCodeAt(0))&0xffff;
+  return colors[h % colors.length];
+}
+function emojiFor(str) {
+  let h=0; for(let c of (str||'')) h=(h*31+c.charCodeAt(0))&0xffff;
+  return clubEmojis[h % clubEmojis.length];
+}
+
+function showToast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast toast-${type} show`;
+  setTimeout(()=>{ t.className='toast'; }, 3200);
+}
+
+function showAuthOnly() {
+  document.getElementById('auth-shell').classList.remove('hidden');
+  document.getElementById('app-shell').classList.add('hidden');
+}
+
+function showAppOnly() {
+  document.getElementById('auth-shell').classList.add('hidden');
+  document.getElementById('app-shell').classList.remove('hidden');
+}
+
+function setAuthError(msg='') {
+  const el = document.getElementById('auth-error');
+  if (el) el.textContent = msg;
+}
+
+function clearAuth() {
+  token = null;
+  currentUser = null;
+  sessionStorage.removeItem('admin_token');
+  sessionStorage.removeItem('admin_user');
+}
+
+function saveAuth(access, user) {
+  token = access;
+  currentUser = user;
+  sessionStorage.setItem('admin_token', access);
+  sessionStorage.setItem('admin_user', JSON.stringify(user));
+}
+
+async function parseResponse(res) {
+  try {
+    return await res.json();
+  } catch (_) {
+    return {};
+  }
+}
+
+async function fetchProfile() {
+  const result = await apiFetch('/auth/me/');
+  return result || null;
+}
+
+async function doAdminLogin(email, password) {
+  const res = await fetch(`${API}/auth/login/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await parseResponse(res);
+  if (!res.ok || !data.access) {
+    throw new Error(data.detail || data.error || 'Invalid credentials');
+  }
+
+  token = data.access;
+  const me = await fetchProfile();
+  if (!me || me.role !== 'administrator') {
+    clearAuth();
+    throw new Error('Access denied: admin account required.');
+  }
+
+  saveAuth(data.access, me);
+}
+
+async function ensureAdminSession() {
+  if (!token) {
+    showAuthOnly();
+    return false;
+  }
+
+  const me = await fetchProfile();
+  if (!me || me.role !== 'administrator') {
+    clearAuth();
+    showAuthOnly();
+    setAuthError('Access denied: admin account required.');
+    return false;
+  }
+
+  saveAuth(token, me);
+  showAppOnly();
+  return true;
+}
+
+function showSection(s) {
+  document.getElementById('section-clubs').style.display = s==='clubs'?'flex':'none';
+  document.getElementById('section-requests').style.display = s==='requests'?'flex':'none';
+  document.getElementById('section-role-settings').style.display = s==='role-settings'?'flex':'none';
+  document.getElementById('page-title').textContent = s==='clubs' ? 'Clubs & Students' : s==='requests' ? 'Club Requests' : 'Role Settings';
+  document.querySelectorAll('.nav-item[data-section]').forEach((el)=>el.classList.toggle('active', el.dataset.section===s));
+}
+
+function defaultRoleSettings(){
+  return {
+    president: ['dashboard','club','membres','events','demandes','avis'],
+    vice_president: ['dashboard','events','membres','demandes','avis'],
+    member: ['dashboard'],
+  };
+}
+
+function loadRoleSettings(){
+  try {
+    const raw = localStorage.getItem(ROLE_SETTINGS_KEY);
+    if (!raw) return defaultRoleSettings();
+    const parsed = JSON.parse(raw);
+    return {
+      president: Array.isArray(parsed.president) ? parsed.president : ['dashboard'],
+      vice_president: Array.isArray(parsed.vice_president) ? parsed.vice_president : ['dashboard'],
+      member: Array.isArray(parsed.member) ? parsed.member : ['dashboard'],
+    };
+  } catch (_) {
+    return defaultRoleSettings();
+  }
+}
+
+let roleSettings = loadRoleSettings();
+
+function renderRoleSettings(){
+  const featureList = document.getElementById('feature-list');
+  if (!featureList) return;
+  featureList.innerHTML = Object.entries(FEATURES).map(([key,label]) =>
+    `<div class="feature-chip" draggable="true" ondragstart="onFeatureDragStart(event,'${key}')">${label}</div>`
+  ).join('');
+
+  ['president','vice_president','member'].forEach((role) => {
+    const root = document.getElementById(`role-${role}`);
+    if (!root) return;
+    const items = (roleSettings[role] || []).map((feature) => {
+      const label = FEATURES[feature] || feature;
+      return `<div class="role-item"><span>${label}</span><button class="role-remove" onclick="removeRoleFeature('${role}','${feature}')">x</button></div>`;
+    }).join('');
+    root.innerHTML = items || `<div style="color:var(--muted);font-size:12px">Drop features here</div>`;
+  });
+}
+
+function onFeatureDragStart(e, feature){
+  draggedFeature = feature;
+  e.dataTransfer.effectAllowed = 'copy';
+}
+
+function onRoleDragOver(e, role){
+  e.preventDefault();
+  const root = document.getElementById(`role-${role}`);
+  if (root) root.classList.add('drag-target');
+}
+
+function onRoleDragLeave(e, role){
+  const root = document.getElementById(`role-${role}`);
+  if (root) root.classList.remove('drag-target');
+}
+
+function onRoleDrop(e, role){
+  e.preventDefault();
+  const root = document.getElementById(`role-${role}`);
+  if (root) root.classList.remove('drag-target');
+  if (!draggedFeature) return;
+  const current = new Set(roleSettings[role] || []);
+  current.add(draggedFeature);
+  roleSettings[role] = Array.from(current);
+  renderRoleSettings();
+}
+
+function removeRoleFeature(role, feature){
+  roleSettings[role] = (roleSettings[role] || []).filter((f) => f !== feature);
+  if (!roleSettings[role].includes('dashboard')) roleSettings[role].unshift('dashboard');
+  renderRoleSettings();
+}
+
+function saveRoleSettings(){
+  localStorage.setItem(ROLE_SETTINGS_KEY, JSON.stringify(roleSettings));
+  showToast('Role settings saved', 'success');
+}
+
+function resetRoleSettings(){
+  roleSettings = defaultRoleSettings();
+  localStorage.setItem(ROLE_SETTINGS_KEY, JSON.stringify(roleSettings));
+  renderRoleSettings();
+  showToast('Role settings reset', 'info');
+}
+
+async function apiFetch(path, opts={}) {
+  const headers = { 'Content-Type': 'application/json', ...(token?{Authorization:`Bearer ${token}`}:{}) };
+  try {
+    const r = await fetch(API+path, { ...opts, headers });
+    if (!r.ok) throw new Error(r.status);
+    const ct = r.headers.get('content-type')||'';
+    return ct.includes('json') ? r.json() : {};
+  } catch(e) {
+    return null;
+  }
+}
+
+async function apiRequest(path, opts={}) {
+  const headers = { 'Content-Type': 'application/json', ...(token?{Authorization:`Bearer ${token}`}:{}) };
+  try {
+    const r = await fetch(API+path, { ...opts, headers });
+    const ct = r.headers.get('content-type') || '';
+    const data = ct.includes('json') ? await r.json() : {};
+    if (!r.ok) return { ok: false, status: r.status, data };
+    return { ok: true, status: r.status, data };
+  } catch (e) {
+    return { ok: false, status: 0, data: { detail: 'Network error' } };
+  }
+}
+
+async function loadStudents() {
+  const data = await apiFetch('/users/');
+  if (data && data.results) students = data.results;
+  else if (Array.isArray(data)) students = data;
+  else students = [];
+  document.getElementById('stat-students').textContent = students.length;
+  document.getElementById('student-count').textContent = students.length + ' students';
+  renderStudents(students);
+}
+
+async function loadClubs() {
+  const data = await apiFetch('/clubs/');
+  if (data && data.results) clubs = data.results;
+  else if (Array.isArray(data)) clubs = data;
+  else clubs = [];
+  renderClubs();
+}
+
+async function loadRequests() {
+  const data = await apiFetch('/requests/');
+  let requests = [];
+  if (data && data.results) requests = data.results;
+  else if (Array.isArray(data)) requests = data;
+  const pending = requests.filter(r=>(r.status||'').toUpperCase()==='PENDING');
+  document.getElementById('req-badge').textContent = pending.length;
+  renderRequests(requests);
+}
+
+function renderStudents(list) {
+  const el = document.getElementById('students-list');
+  if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No students found</div>'; return; }
+  el.innerHTML = list.map(s => {
+    const name = `${s.first_name} ${s.last_name}`;
+    const col = colorFor(s.email);
+    return `<div class="student-card" draggable="true"
+      ondragstart="onDragStart(event,'${s.id}')"
+      ondragend="onDragEnd(event)"
+      data-id="${s.id}" data-name="${name}" data-email="${s.email}" data-color="${col}">
+      <div class="avatar ${col}">${initials(name)}</div>
+      <div class="student-info">
+        <div class="student-name">${name}</div>
+        <div class="student-email">${s.email}</div>
+      </div>
+      <div class="drag-hint">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--muted)"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterStudents() {
+  const q = document.getElementById('student-search').value.toLowerCase();
+  renderStudents(students.filter(s=>{
+    const n = `${s.first_name} ${s.last_name} ${s.email}`.toLowerCase();
+    return n.includes(q);
+  }));
+}
+
+function renderClubs() {
+  const el = document.getElementById('clubs-list');
+  document.getElementById('stat-clubs').textContent = clubs.length;
+  document.getElementById('clubs-count').textContent = clubs.length + ' clubs';
+  let members = clubs.reduce((a,c)=>(c.memberships||[]).length+a, 0);
+  document.getElementById('stat-members').textContent = members;
+
+  if (!clubs.length) {
+    el.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted)">
+      <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1" style="margin:0 auto 12px;display:block;opacity:0.4"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      No clubs yet. Click "New Club" to create one.
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = clubs.map(c => {
+    const emoji = emojiFor(c.name);
+    const presidentMember = (c.memberships||[]).find(m=>m.internal_role==='president');
+    const presidentUser = presidentMember ? students.find(s=>s.id===presidentMember.user||s.id===presidentMember.user_detail?.id) : null;
+    const presidentName = presidentUser ? `${presidentUser.first_name} ${presidentUser.last_name}` : (presidentMember?.user_detail ? `${presidentMember.user_detail.first_name} ${presidentMember.user_detail.last_name}` : null);
+
+    let dropZoneHtml = presidentName
+      ? `<div class="club-drop-zone has-president">
+          <div class="president-chip">
+            <div class="avatar avatar-green" style="width:28px;height:28px;font-size:11px">${initials(presidentName)}</div>
+            <div>
+              <div class="president-name">${presidentName}</div>
+              <div class="president-label">President</div>
+            </div>
+            <button class="remove-btn" onclick="removePresident('${c.id||c.club_id}')" title="Remove president">
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>`
+      : `<div class="club-drop-zone" id="drop-${c.id||c.club_id}"
+            ondragover="onDragOver(event,'${c.id||c.club_id}')"
+            ondragleave="onDragLeave(event,'${c.id||c.club_id}')"
+            ondrop="onDrop(event,'${c.id||c.club_id}')">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="opacity:0.5"><path d="M12 5v14M5 12h14"/></svg>
+          Drop student here to assign as president
+        </div>`;
+
+    return `<div class="club-card" id="club-${c.id||c.club_id}">
+      <div class="club-header">
+        <div class="club-icon">${emoji}</div>
+        <div>
+          <div class="club-name">${c.name}</div>
+          <div style="font-size:11px;color:var(--muted)">${c.category||'General'} · ${(c.memberships||[]).length} members</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="deleteClub('${c.id||c.club_id}')">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
+      </div>
+      ${dropZoneHtml}
+    </div>`;
+  }).join('');
+}
+
+function renderRequests(requests) {
+  const el = document.getElementById('requests-list');
+  if (!requests.length) { el.innerHTML='<div style="color:var(--muted);padding:40px;text-align:center">No requests yet.</div>'; return; }
+  el.innerHTML = requests.map(r => {
+    const reqId = r.id || r.request_id;
+    const userObj = (r.user && typeof r.user === 'object') ? r.user : null;
+    const userName = userObj ? `${userObj.first_name || ''} ${userObj.last_name || ''}`.trim() : 'Unknown';
+    const userEmail = userObj?.email || (typeof r.user === 'string' ? r.user : '');
+    const isPending = (r.status||'').toUpperCase() === 'PENDING';
+    return `<div class="request-item">
+      <div class="request-top">
+        <div>
+          <div class="request-title">${r.title}</div>
+          <div class="request-by">Requested by ${userName} · ${userEmail}</div>
+        </div>
+        <span class="badge ${isPending?'badge-pending':'badge-active'}">${r.status}</span>
+      </div>
+      <div class="request-desc">${r.description||'No description provided.'}</div>
+      ${isPending ? `<div class="request-actions">
+        <button class="btn btn-success btn-sm" onclick="handleRequest('${reqId}','TREATED')">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Approve
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="handleRequest('${reqId}','REJECTED')">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Reject
+        </button>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// Drag and drop
+function onDragStart(e, studentId) {
+  draggedStudent = students.find(s=>s.id==studentId);
+  e.dataTransfer.effectAllowed = 'copy';
+  e.currentTarget.classList.add('dragging');
+}
+function onDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  draggedStudent = null;
+}
+function onDragOver(e, clubId) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+  const zone = document.getElementById(`drop-${clubId}`);
+  if (zone) zone.style.background='rgba(108,99,255,0.15)';
+  const card = document.getElementById(`club-${clubId}`);
+  if (card) card.classList.add('drag-target');
+}
+function onDragLeave(e, clubId) {
+  const zone = document.getElementById(`drop-${clubId}`);
+  if (zone) zone.style.background='';
+  const card = document.getElementById(`club-${clubId}`);
+  if (card) card.classList.remove('drag-target');
+}
+async function onDrop(e, clubId) {
+  e.preventDefault();
+  if (!draggedStudent) return;
+  const card = document.getElementById(`club-${clubId}`);
+  if (card) card.classList.remove('drag-target');
+
+  const student = draggedStudent;
+  const club = clubs.find(c=>(c.id||c.club_id)==clubId);
+  if (!club) return;
+
+  const result = await apiRequest('/memberships/', {
+    method: 'POST',
+    body: JSON.stringify({ user: student.id, club: clubId, internal_role: 'president', status: 'approved' })
+  });
+
+  if (!result.ok) {
+    showToast(result.data?.detail || result.data?.internal_role?.[0] || 'Failed to assign president', 'info');
+    return;
+  }
+
+  await loadClubs();
+  showToast(`${student.first_name} ${student.last_name} assigned as president of ${club.name}`, 'success');
+}
+
+async function removePresident(clubId) {
+  const club = clubs.find(c=>(c.id||c.club_id)==clubId);
+  if (!club) return;
+  const presidentMembership = (club.memberships || []).find(m=>m.internal_role==='president');
+  if (!presidentMembership?.id) {
+    showToast('No persisted president membership found', 'info');
+    return;
+  }
+  const result = await apiRequest(`/memberships/${presidentMembership.id}/`, { method: 'DELETE' });
+  if (!result.ok) {
+    showToast(result.data?.detail || 'Failed to remove president', 'info');
+    return;
+  }
+  await loadClubs();
+  showToast('President removed', 'info');
+}
+
+async function deleteClub(clubId) {
+  if (!confirm('Delete this club?')) return;
+  const result = await apiRequest(`/clubs/${clubId}/`, { method: 'DELETE' });
+  if (!result.ok) {
+    showToast(result.data?.detail || 'Failed to delete club', 'info');
+    return;
+  }
+  await loadClubs();
+  showToast('Club deleted', 'info');
+}
+
+async function handleRequest(reqId, newStatus) {
+  const result = await apiRequest(`/requests/${reqId}/update_status/`, { method:'PATCH', body:JSON.stringify({status:newStatus}) });
+  if (!result.ok) {
+    showToast(result.data?.detail || 'Failed to update request', 'info');
+    return;
+  }
+  showToast(newStatus==='TREATED'?'Request approved — club created!':'Request rejected', newStatus==='TREATED'?'success':'info');
+  loadRequests();
+  if (newStatus==='TREATED') loadClubs();
+}
+
+// Modal
+function openCreateModal() { document.getElementById('create-modal').classList.add('open'); }
+function closeCreateModal() { document.getElementById('create-modal').classList.remove('open'); }
+
+async function createClub() {
+  const name = document.getElementById('club-name-input').value.trim();
+  const category = document.getElementById('club-category-input').value.trim();
+  const description = document.getElementById('club-desc-input').value.trim();
+  if (!name) { showToast('Please enter a club name'); return; }
+
+  const result = await apiRequest('/clubs/', { method:'POST', body: JSON.stringify({name, category, description, is_active:true}) });
+  if (!result.ok) {
+    showToast(result.data?.detail || result.data?.name?.[0] || 'Failed to create club', 'info');
+    return;
+  }
+  await loadClubs();
+  closeCreateModal();
+  document.getElementById('club-name-input').value='';
+  document.getElementById('club-category-input').value='';
+  document.getElementById('club-desc-input').value='';
+  showToast(`Club "${name}" created!`, 'success');
+}
+
+// Init
+document.getElementById('create-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeCreateModal();
+});
+
+document.getElementById('refresh-btn').addEventListener('click', () => {
+  loadStudents(); loadClubs(); loadRequests();
+});
+
+document.getElementById('admin-login-form').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const btn = document.getElementById('admin-login-btn');
+  const email = document.getElementById('admin-email').value.trim();
+  const password = document.getElementById('admin-password').value;
+  setAuthError('');
+  btn.disabled = true;
+  const old = btn.textContent;
+  btn.textContent = 'Signing in...';
+  try {
+    await doAdminLogin(email, password);
+    showAppOnly();
+    renderRoleSettings();
+    await loadStudents();
+    await loadClubs();
+    await loadRequests();
+    showToast('Welcome admin', 'success');
+  } catch (err) {
+    setAuthError(err.message || 'Login failed');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = old;
+  }
+});
+
+(async function init() {
+  const ok = await ensureAdminSession();
+  if (!ok) return;
+  renderRoleSettings();
+  await loadStudents();
+  await loadClubs();
+  await loadRequests();
+})();
+</script>
+</body>
+</html>
