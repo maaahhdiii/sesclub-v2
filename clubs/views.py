@@ -36,14 +36,30 @@ class ClubViewSet(viewsets.ModelViewSet):
         if self.request.method in permissions.SAFE_METHODS:
             return
         if not getattr(self.request.user, 'is_administrator', False):
-            raise PermissionDenied('Only administrators can manage clubs.')
+            raise PermissionDenied('Only administrators can create or delete clubs.')
+
+    def _can_update_club(self, club):
+        """Check if user can update a specific club (admins or club managers who manage it)."""
+        user = self.request.user
+        if getattr(user, 'is_administrator', False):
+            return True
+        if getattr(user, 'is_club_manager', False):
+            is_manager = user.club_memberships.filter(
+                club=club,
+                internal_role__in=['president', 'vice_president'],
+                status__in=['active', 'approved'],
+            ).exists()
+            return is_manager
+        return False
 
     def perform_create(self, serializer):
         self._ensure_admin_for_write()
         serializer.save()
 
     def perform_update(self, serializer):
-        self._ensure_admin_for_write()
+        club = serializer.instance
+        if not self._can_update_club(club):
+            raise PermissionDenied('You do not have permission to update this club.')
         serializer.save()
 
     def perform_destroy(self, instance):

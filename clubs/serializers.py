@@ -61,8 +61,8 @@ class ClubSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Club
-        fields = ('id', 'name', 'description', 'logo', 'is_active', 'created_at', 'updated_at', 'memberships', 'reviews')
-        read_only_fields = ('id', 'created_at', 'updated_at')
+        fields = ('id', 'name', 'description', 'logo', 'logo_thumbnail', 'is_active', 'created_at', 'updated_at', 'memberships', 'reviews')
+        read_only_fields = ('id', 'logo_thumbnail', 'created_at', 'updated_at')
 
     def get_reviews(self, obj):
         payload = [
