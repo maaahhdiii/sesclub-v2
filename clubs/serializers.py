@@ -2,6 +2,13 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .models import Club, ClubMembership
 from users.serializers import UserSerializer
+from django.core.files.uploadedfile import InMemoryUploadedFile
+import io
+try:
+    from PIL import Image, UnidentifiedImageError
+    PIL_AVAILABLE = True
+except Exception:
+    PIL_AVAILABLE = False
 
 
 User = get_user_model()
@@ -69,3 +76,40 @@ class ClubSerializer(serializers.ModelSerializer):
             for review in obj.reviews.select_related('user').all()
         ]
         return ClubReviewSummarySerializer(payload, many=True).data
+
+    def validate(self, attrs):
+        # Validate uploaded logo if present
+        logo = attrs.get('logo')
+        if logo:
+            # Basic content-type/size checks
+            content_type = getattr(logo, 'content_type', '')
+            if content_type and not content_type.startswith('image/'):
+                raise serializers.ValidationError({'logo': 'Uploaded file must be an image.'})
+            max_bytes = 2 * 1024 * 1024  # 2 MB
+            size = getattr(logo, 'size', None)
+            if size and size > max_bytes:
+                raise serializers.ValidationError({'logo': 'Image file too large (max 2 MB).'})
+
+            # If Pillow is available, attempt to normalize / resize the image to a reasonable width
+            if PIL_AVAILABLE and isinstance(logo, InMemoryUploadedFile):
+                try:
+                    logo.file.seek(0)
+                    img = Image.open(logo.file)
+                    img = img.convert('RGBA') if img.mode in ('P', 'LA') else img.convert('RGB')
+                    max_width = 1200
+                    if img.width > max_width:
+                        ratio = max_width / float(img.width)
+                        new_height = int(float(img.height) * ratio)
+                        img = img.resize((max_width, new_height), Image.LANCZOS)
+                        out = io.BytesIO()
+                        img_format = 'JPEG' if img.mode == 'RGB' else 'PNG'
+                        img.save(out, format=img_format, quality=85)
+                        out.seek(0)
+                        new_file = InMemoryUploadedFile(out, 'logo', logo.name, f'image/{img_format.lower()}', out.getbuffer().nbytes, None)
+                        attrs['logo'] = new_file
+                except UnidentifiedImageError:
+                    raise serializers.ValidationError({'logo': 'Uploaded file is not a valid image.'})
+                except Exception:
+                    # If processing fails, fall back to accepting the original file
+                    pass
+        return super().validate(attrs)

@@ -6,6 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.serializers import ValidationError
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
@@ -27,6 +28,7 @@ class ClubViewSet(viewsets.ModelViewSet):
     queryset = Club.objects.all()
     serializer_class = ClubSerializer
     permission_classes = [permissions.IsAuthenticated, IsVerified]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
     search_fields = ['name', 'description']
     filterset_fields = ['is_active']
 
