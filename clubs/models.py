@@ -11,6 +11,7 @@ class Club(models.Model):
     name = models.CharField(max_length=200, unique=True)
     description = models.TextField(blank=True, default='')
     logo = models.ImageField(upload_to='club_logos/', blank=True, null=True)
+    logo_thumbnail = models.ImageField(upload_to='club_logos/thumbnails/', blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     

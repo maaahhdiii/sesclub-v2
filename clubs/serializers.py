@@ -112,4 +112,19 @@ class ClubSerializer(serializers.ModelSerializer):
                 except Exception:
                     # If processing fails, fall back to accepting the original file
                     pass
+            # Also generate a small thumbnail if possible
+            if PIL_AVAILABLE and isinstance(attrs.get('logo'), InMemoryUploadedFile):
+                try:
+                    attrs['logo'].file.seek(0)
+                    img = Image.open(attrs['logo'].file)
+                    img = img.convert('RGB')
+                    thumb_size = (300, 300)
+                    img.thumbnail(thumb_size, Image.LANCZOS)
+                    out = io.BytesIO()
+                    img.save(out, format='JPEG', quality=80)
+                    out.seek(0)
+                    thumb_file = InMemoryUploadedFile(out, 'logo_thumbnail', f"thumb_{attrs['logo'].name}", 'image/jpeg', out.getbuffer().nbytes, None)
+                    attrs['logo_thumbnail'] = thumb_file
+                except Exception:
+                    pass
         return super().validate(attrs)
