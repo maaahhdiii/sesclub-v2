@@ -143,7 +143,17 @@
         <div class="card">
           <form id="club-form" class="stack">
             <div><label>Nom du club</label><input id="club-name" name="name"></div>
-            <div><label>Logo URL</label><input id="club-logo" name="logo" placeholder="https://..."></div>
+            <div>
+              <label>Logo</label>
+              <div style="display:flex;gap:12px;align-items:center;">
+                <div style="flex:1;">
+                  <input id="club-logo-file" name="logo_file" type="file" accept="image/*">
+                </div>
+                <div style="width:84px;height:56px;border-radius:8px;overflow:hidden;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;">
+                  <img id="club-logo-preview" src="" alt="logo" style="max-width:100%;max-height:100%;display:none;object-fit:contain;">
+                </div>
+              </div>
+            </div>
             <div><label>Description</label><textarea id="club-description" name="description"></textarea></div>
             <div><label>Statut</label><select id="club-active" name="is_active"><option value="true">Actif</option><option value="false">Inactif</option></select></div>
             <button id="club-save-btn" class="btn btn-primary" type="submit">Enregistrer</button>
@@ -472,7 +482,14 @@
     function renderClub() {
       if(!state.club) return;
       document.getElementById('club-name').value = state.club.name || '';
-      document.getElementById('club-logo').value = state.club.logo || '';
+      // Show logo preview when available (Club.logo is an ImageField URL)
+      const preview = document.getElementById('club-logo-preview');
+      if (state.club.logo) {
+        try { preview.src = state.club.logo; preview.style.display = 'block'; } catch (_) { preview.style.display = 'none'; }
+      } else {
+        preview.src = '';
+        preview.style.display = 'none';
+      }
       document.getElementById('club-description').value = state.club.description || '';
       document.getElementById('club-active').value = String(!!state.club.is_active);
     }
@@ -567,8 +584,20 @@
     }
     async function updateClub(formData) {
       if(!state.club) throw new Error('Aucun club à modifier');
-      const payload = { ...formData, is_active: formData.is_active === 'true' };
-      const res = await api('PATCH', `/clubs/${state.club.id}/`, payload);
+      // If a file was selected, submit multipart/form-data
+      const fileInput = document.getElementById('club-logo-file');
+      let res;
+      if (fileInput && fileInput.files && fileInput.files[0]) {
+        const fd = new FormData();
+        fd.append('name', formData.name || '');
+        fd.append('description', formData.description || '');
+        fd.append('is_active', formData.is_active === 'true' ? 'true' : 'false');
+        fd.append('logo', fileInput.files[0]);
+        res = await api('PATCH', `/clubs/${state.club.id}/`, fd, true);
+      } else {
+        const payload = { ...formData, is_active: formData.is_active === 'true' };
+        res = await api('PATCH', `/clubs/${state.club.id}/`, payload);
+      }
       if(!res) return;
       const data = await parseResponse(res);
       if(!res.ok) throw new Error(data.detail || 'Mise à jour du club impossible');
